@@ -772,3 +772,13 @@ svg.heartbeat { top: auto; bottom: 8%; height: 18%; width: 100%; }
   opacity: 0; transition: opacity 2s ease;
 }
 .story.is-warm .stage::after { opacity: 1; }
+
+/* bouquet */
+.bouquet { position: relative; margin: 8vh auto 0; max-width: 420px; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 70px rgba(46,26,38,.25); background: #2E1A26; }
+.bouquet video { width: 100%; aspect-ratio: 9/16; object-fit: cover; }
+.bouquet figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 24px 28px; text-align: center; color: #FFF4F6;
+  background: linear-gradient(180deg, transparent, rgba(30,10,18,.78));
+}
+.bq-small { display: block; font-size: 1.6rem; opacity: .9; }
+.bq-big { display: block; font-family: var(--display); font-size: clamp(1.8rem, 1.4rem + 1.6vw, 2.4rem); line-height: 1.1; margin-top: 4px; }

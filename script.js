@@ -155,7 +155,7 @@
     });
   }, { threshold: .35 });
   function watchVideo(v) { if (!reduceMotion) videoWatcher.observe(v); }
-  $$('.memory video').forEach(watchVideo);
+  $$('.memory video, .bouquet video').forEach(watchVideo);
 
   $$('.sound').forEach(btn => {
     btn.addEventListener('click', () => {
