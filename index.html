@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>For Dioca</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=Nanum+Pen+Script&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top">
+  <svg class="hero-thread" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path class="thread-path" d="M500 -10 C 520 120, 470 170, 520 230 C 600 330, 860 330, 850 420 C 840 600, 160 620, 150 470 C 140 340, 420 330, 500 440 C 560 520, 470 620, 505 720" />
+  </svg>
+  <div class="hero-inner">
+    <p class="hand hero-pre">this one is for you,</p>
+    <h1 class="hero-name">Dioca</h1>
+    <p class="hero-sub">Before you close this, give me a few quiet minutes.<br>Scroll slowly. I meant every word.</p>
+  </div>
+  <a class="scroll-cue hand" href="#story">start here ↓</a>
+</header>
+
+<!-- ============ THE THREE DAYS ============ -->
+<section class="story" id="story" aria-label="The three days after you left">
+  <div class="stage" data-scene="snap" aria-hidden="true">
+    <img class="layer backdrop" src="assets/media/rain-window.jpg" alt="">
+    <canvas class="layer rain" id="rain"></canvas>
+
+    <!-- the thread that snaps, then ties again -->
+    <svg class="layer snap" viewBox="0 0 1000 200" preserveAspectRatio="none">
+      <path class="half left" d="M-10 100 C 200 96, 380 104, 500 100" />
+      <path class="half right" d="M500 100 C 620 96, 800 104, 1010 100" />
+    </svg>
+
+    <!-- the replay -->
+    <div class="layer replay">
+      <img src="assets/media/photo-07.jpg" alt="">
+      <span class="replay-tag">↺ again</span>
+    </div>
+
+    <!-- the phone -->
+    <div class="layer phone">
+      <div class="phone-body">
+        <div class="phone-avatar">D</div>
+        <div class="phone-name">Dioca</div>
+        <div class="phone-status">
+          <span class="s s-calling">calling…</span>
+          <span class="s s-noanswer">no answer</span>
+          <span class="s s-connected">00:02</span>
+          <span class="s s-ended">call ended</span>
+        </div>
+        <div class="phone-end" title=""></div>
+      </div>
+    </div>
+
+    <!-- heartbeat -->
+    <svg class="layer heartbeat" viewBox="0 0 600 120" preserveAspectRatio="none">
+      <path d="M0 60 H120 L140 60 L155 20 L170 100 L185 45 L195 60 H300 L320 60 L335 20 L350 100 L365 45 L375 60 H480 L500 60 L515 20 L530 100 L545 45 L555 60 H600" />
+    </svg>
+
+    <!-- 2am ceiling -->
+    <div class="layer ceiling"><span class="sweep"></span><span class="hand clock">two hours later</span></div>
+
+    <!-- regret: a warm memory showing through the dark -->
+    <div class="layer regret"><img src="assets/media/photo-05.jpg" alt=""></div>
+
+    <!-- messages, then space -->
+    <div class="layer messages">
+      <span class="bubble">Dioca?</span>
+      <span class="bubble">please pick up</span>
+      <span class="bubble">can we talk</span>
+      <span class="bubble">I'm sorry</span>
+      <span class="bubble">please</span>
+      <span class="bubble">please</span>
+    </div>
+
+    <!-- the silence got loud -->
+    <div class="layer loud"><i></i><i></i><i></i><i></i></div>
+
+    <!-- drifting memories -->
+    <div class="layer drift">
+      <img src="assets/media/photo-04.jpg" alt="">
+      <img src="assets/media/photo-08.jpg" alt="">
+      <img src="assets/media/photo-09.jpg" alt="">
+      <img src="assets/media/photo-10.jpg" alt="">
+    </div>
+
+    <!-- the engine / dashboard -->
+    <div class="layer engine"><span class="dial"><span class="needle"></span></span></div>
+
+    <!-- clinic -->
+    <div class="layer clinic"><span class="cross"></span></div>
+
+    <!-- prescription -->
+    <div class="layer rx">
+      <div class="rx-label">
+        <div class="rx-top"><span>Rx</span><span>Day three</span></div>
+        <div class="rx-row"><span>Patient</span><span>me</span></div>
+        <div class="rx-row"><span>For the flu</span><span>twice a day ✓</span></div>
+        <div class="rx-row rx-heart"><span>For the heart</span><span>not found</span></div>
+      </div>
+    </div>
+
+    <!-- day four -->
+    <div class="layer day4">
+      <div class="page">
+        <span class="page-top">Day 4</span>
+        <span class="hand page-note">with you?</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step day-label" data-scene="snap"><p class="eyebrow">Day one</p></div>
+    <div class="step" data-scene="snap"><p>My whole world fell apart in one moment. I watched the love of my life walk away, right in front of me, and her face gave nothing away.</p></div>
+    <div class="step" data-scene="drive"><p>I don't really remember the drive home. I only remember crying the entire way, so hard I could barely see the road.</p></div>
+    <div class="step" data-scene="replay"><p>By the time I got home my face hurt, my chest ached and my body had gone numb. My mind kept replaying that last moment with you. Over and over.</p></div>
+    <div class="step" data-scene="phone"><p>That night all I wanted was to hear your voice. I called. And called. And called. Nothing.</p></div>
+    <div class="step" data-scene="phone2"><p>Then I heard you, on my other number. You didn't hesitate. My heart was racing faster than it ever has, and then the line went quiet.</p></div>
+    <div class="step" data-scene="ceiling"><p>I cried myself to sleep. I woke up two hours later feeling like I'd slept for days, head pounding, staring at the ceiling with nothing but regret for company.</p></div>
+    <div class="step" data-scene="regret"><p>That's when it finally landed. I treated you badly. Every time you cried, you were telling me how much you needed me to show up, and I didn't. You gave me the best version of you for so long and got so little back.</p></div>
+
+    <div class="step day-label" data-scene="flu"><p class="eyebrow">Day two</p></div>
+    <div class="step" data-scene="flu"><p>I hadn't eaten since Sunday. Two whole days. My body was shutting down and I honestly couldn't tell if it was the heartbreak or the flu. It was both.</p></div>
+    <div class="step" data-scene="messages"><p>I woke up to flashbacks, and I saw clearly how I'd behaved the day before. All those calls. All those messages. That wasn't fair to you.</p></div>
+    <div class="step" data-scene="space"><p>So I tried to stand where you were standing. And I decided to give you the space and the respect you deserve.</p></div>
+    <div class="step" data-scene="space"><p>Because you are a lady with real dignity. Not once did you act out of character. You carried all of it with so much grace, and I respect you deeply for that.</p></div>
+    <div class="step step-loud" data-scene="loud"><p>Then the silence got <em>loud</em>.</p></div>
+    <div class="step" data-scene="drift"><p>Every thought led back to us. I've never wanted anything back the way I want this. In between coughing fits, I replayed every memory we have.</p></div>
+
+    <div class="step day-label" data-scene="engine"><p class="eyebrow">Day three</p></div>
+    <div class="step" data-scene="engine"><p>I told myself going to the office would make me feel normal again. I bathed, got dressed and started the car.</p></div>
+    <div class="step" data-scene="clinic"><p>Then it hit me. If I drove like this, I might never get the chance to fight for you again. So I went back inside, changed, and went to the clinic instead.</p></div>
+    <div class="step" data-scene="rx"><p>The medicine is working. The flu is getting better. My heart, though, has no prescription.</p></div>
+    <div class="step" data-scene="cure"><p>You are my cure. Not so I can feel better, but so I can make right what I got wrong, and give you the world you have always deserved.</p></div>
+    <div class="step" data-scene="cure"><p>Let me have one more chance to show you that I loved you. That I still do. Life without you just doesn't make sense.</p></div>
+
+    <div class="step day-label" data-scene="day4"><p class="eyebrow">Day four</p></div>
+    <div class="step" data-scene="day4"><p>Come back, baby. I want you in my Day 4. I'm ready to do whatever it takes, and I've made up my mind. I'm not giving up on us.</p></div>
+  </div>
+</section>
+
+<!-- ============ MEMORY LANE ============ -->
+<section class="lane" id="memory-lane" aria-labelledby="lane-title">
+  <div class="lane-head">
+    <p class="hand lane-pre">down</p>
+    <h2 id="lane-title">Memory lane</h2>
+  </div>
+
+  <article class="memory" data-memory="phone">
+    <figure class="memory-photo">
+      <img src="assets/media/photo-01.jpg" alt="Us in the mirror, you with your new phone">
+      <figcaption class="hand">the phone ♡</figcaption>
+    </figure>
+
+    <div class="memory-text">
+      <p class="eyebrow">Memory one</p>
+      <h3>The phone</h3>
+
+      <p>This is one of my favourite memories, and I want to tell you why.</p>
+      <p>Months and months ago, right when you'd just started your job, you told me you were going to buy yourself this phone.</p>
+
+      <div class="savings" aria-hidden="true">
+        <div class="savings-track"><span class="savings-fill"></span></div>
+        <div class="savings-labels"><span>saving</span><span class="savings-done">got it ✓</span></div>
+      </div>
+
+      <p>And then you just did it. You worked so hard, you saved, and you didn't let anything pull you off course. You showed me that when you want something, you go and get it.</p>
+      <p>It was never really about the phone. It was about seeing who you are: someone with goals, who keeps pushing past her own limits. That day showed me the woman you were becoming.</p>
+
+      <svg class="climb" viewBox="0 0 400 140" aria-hidden="true">
+        <path class="climb-line" d="M10 128 L90 110 L150 112 L220 74 L280 80 L390 14" />
+        <g class="climb-dots">
+          <circle cx="90" cy="110" r="5"/><circle cx="220" cy="74" r="5"/><circle cx="390" cy="14" r="5"/>
+        </g>
+        <text x="90" y="134">the job</text>
+        <text x="220" y="98">your business</text>
+        <text x="390" y="36" text-anchor="end">tenders</text>
+      </svg>
+
+      <p>And look at you now. You've grown so much since the girl I first met. You started your own business. You're winning tenders. At your age you're already reaching heights most people only talk about.</p>
+      <p class="memory-close">I'm so proud of you, Dioca. You only keep getting better.</p>
+    </div>
+  </article>
+
+  <article class="memory memory-flip" data-memory="cheerleader">
+    <figure class="memory-photo">
+      <img src="assets/media/photo-02.jpg" alt="Us at AWS">
+      <figcaption class="hand">AWS day</figcaption>
+    </figure>
+
+    <div class="memory-text">
+      <p class="eyebrow">Memory two</p>
+      <h3>My biggest cheerleader</h3>
+
+      <p>You came with me to AWS that day. You didn't have to. You just wanted to be next to me while I did something big.</p>
+
+      <ul class="wins" aria-label="Things you were part of">
+        <li><span class="tick" aria-hidden="true">♥</span><span><b>AWS.</b> You were right there beside me.</span></li>
+        <li><span class="tick" aria-hidden="true">♥</span><span><b>LamTech.</b> Where would it be without you?</span></li>
+        <li><span class="tick" aria-hidden="true">♥</span><span><b>My promotion.</b> Would it have happened without you?</span></li>
+      </ul>
+
+      <p>Honestly, I doubt it. You've pushed me towards things I didn't think I could reach, and that still amazes me.</p>
+      <p>You helped me make the right decisions. You kept me working hard and focused, and you were there for every single step. Without you, I know I would have lost my way.</p>
+
+      <div class="compass" aria-hidden="true">
+        <span class="compass-face"><span class="compass-needle"></span></span>
+        <span class="hand compass-label">you, always pointing me home</span>
+      </div>
+
+      <p class="memory-close">So please, stay with me, baby. I need you for this life. Your support, your guidance. You.</p>
+    </div>
+  </article>
+
+  <article class="memory memory-night" data-memory="night">
+    <div class="stars" aria-hidden="true"></div>
+    <figure class="memory-photo">
+      <img src="assets/media/photo-06.jpg" alt="Us that night, you in your bonnet">
+      <figcaption class="hand">the best night</figcaption>
+    </figure>
+
+    <div class="memory-text">
+      <p class="eyebrow">Memory three</p>
+      <h3>That night</h3>
+
+      <p>This day showed me how far you were willing to go just so we could be together.</p>
+      <p>It's rare to find someone who would risk getting into trouble just to see the person they love. You could so easily have told me you couldn't make it. You came anyway.</p>
+      <p>And that night was the best ever. We spent hours together, and we:</p>
+
+      <p class="did" aria-label="laughed, danced and cooked together">
+        <span>laughed</span><span>danced</span><span>cooked</span>
+      </p>
+
+      <p>Moments like that are meant to live forever. I don't think I'll ever feel anything like it again unless it's with you.</p>
+      <p class="memory-close">I want it to be you. No one else.</p>
+    </div>
+  </article>
+
+  <article class="memory memory-flip" data-memory="dream">
+    <figure class="memory-photo">
+      <img src="assets/media/photo-03.jpg" alt="Us at the table, almost kissing">
+      <figcaption class="hand">my future engineer</figcaption>
+    </figure>
+
+    <div class="memory-text">
+      <p class="eyebrow">Memory four</p>
+      <h3>Your dream</h3>
+
+      <p>I pray you reach every goal you've set. I know you're going to become one of the best mechanical engineers at the biggest mine in this country.</p>
+      <p>I'm behind your dreams, completely.</p>
+
+      <div class="shaft" aria-hidden="true">
+        <span class="shaft-line"><span class="shaft-cage"></span></span>
+        <span class="hand shaft-top">day one, talking about it</span>
+        <span class="hand shaft-bottom">you, right in it</span>
+      </div>
+
+      <p>I want to be there to witness it. From hearing you talk about mining on day one, to one day seeing you right in the middle of it. That is going to be beautiful, and I'll be so proud of you.</p>
+      <p>I know you'll get there.</p>
+      <p class="memory-close">Please bless me with the chance to still be part of it.</p>
+    </div>
+  </article>
+
+  <article class="memory memory-fade" data-memory="best-times">
+    <figure class="memory-photo">
+      <video src="assets/media/video-01.mp4" poster="assets/media/video-01-poster.jpg" muted loop playsinline preload="metadata" aria-label="Our memory video"></video>
+      <button class="sound hand" type="button" aria-pressed="false">tap for sound</button>
+      <figcaption class="hand">best times</figcaption>
+    </figure>
+
+    <div class="memory-text">
+      <p class="eyebrow">Memory five</p>
+      <h3>Best times</h3>
+      <p>Watch this one with me.</p>
+      <p>Moments like this are the ones I keep going back to. I don't want this to slowly become a memory we forget.</p>
+      <p class="memory-close">Please, baby.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ============ WHAT YOU ARE TO ME ============ -->
+<section class="you" id="what-you-are" aria-labelledby="you-title">
+  <h2 id="you-title">What you are to me</h2>
+
+  <div class="you-item">
+    <svg class="you-icon icon-light" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="9"/><g><path d="M30 6v8M30 46v8M6 30h8M46 30h8M13 13l6 6M41 41l6 6M47 13l-6 6M19 41l-6 6"/></g></svg>
+    <p>You give my life purpose. You're the reason I want to be better. On the days that felt dark, you were the light that stayed on.</p>
+  </div>
+
+  <div class="you-item">
+    <svg class="you-icon icon-smile" viewBox="0 0 60 60" aria-hidden="true"><circle cx="21" cy="24" r="2.5"/><circle cx="39" cy="24" r="2.5"/><path d="M16 34 Q30 48 44 34"/></svg>
+    <p>And you're so funny. You made sure there was a smile on my face every single day, even on the days I didn't think I had one in me.</p>
+  </div>
+
+  <div class="you-item">
+    <svg class="you-icon icon-moon" viewBox="0 0 60 60" aria-hidden="true"><path d="M38 10a20 20 0 1 0 12 30A16 16 0 0 1 38 10z"/><path class="tiny-heart" d="M24 30c-3-4 2-7 4-3 2-4 7-1 4 3l-4 4z"/></svg>
+    <p>You never let us go to sleep angry. You always said we fix it first. That's how beautiful your heart is.</p>
+  </div>
+
+  <div class="you-item">
+    <svg class="you-icon icon-talk" viewBox="0 0 60 60" aria-hidden="true"><path class="b1" d="M8 12h28v16H18l-6 6v-6H8z"/><path class="b2" d="M52 26H24v16h18l6 6v-6h4z"/></svg>
+    <p>You made sure we took care of each other's hearts. That we listened, really listened, and that we were always there for one another.</p>
+  </div>
+
+  <div class="you-item">
+    <svg class="you-icon icon-gift" viewBox="0 0 60 60" aria-hidden="true"><rect x="12" y="26" width="36" height="24" rx="2"/><path class="lid" d="M10 18h40v8H10zM30 18v32M30 18c-6-10-14-4-8 0M30 18c6-10 14-4 8 0"/></svg>
+    <p>With you I never felt like I was missing anything. Big or small, whatever I needed, you made sure I had it.</p>
+  </div>
+
+  <p class="you-close hand">You are one of a kind, Dioca.<br>I want you. I miss you, baby.</p>
+</section>
+
+<!-- ============ THE LETTER ============ -->
+<section class="letter-sec" id="letter" aria-labelledby="letter-title">
+  <h2 id="letter-title" class="hand letter-pre">one more thing. I wrote you a letter.</h2>
+
+  <button class="envelope" id="envelope" type="button" aria-expanded="false" aria-controls="letter-paper">
+    <span class="env-back"></span>
+    <span class="env-flap"></span>
+    <span class="env-front"></span>
+    <span class="env-to hand">for Dioca</span>
+    <span class="seal" aria-hidden="true">D</span>
+    <span class="env-hint hand">tap to open</span>
+  </button>
+
+  <div class="letter-wrap" id="letter-paper">
+    <article class="paper" tabindex="-1">
+      <p class="paper-to hand">Dioca,</p>
+
+      <p>I wronged you in the worst way. I broke your trust. I lied to you, over and over, until lying came easier than the truth. I became selfish, someone who only thought about himself, and nothing like the man you fell in love with. I went against every one of the 14 reasons you gave me for loving you.</p>
+
+      <p>I'm in tears as I write this. Because of my own selfishness, I've lost my best friend, my biggest supporter, my family and the person I wanted to spend my life with. It aches knowing I was willing to risk everything we built for a groove and for friends.</p>
+
+      <p>I chose them over you. So many nights you needed me, and I wasn't there. I did things to you that you would never, ever do to me.</p>
+
+      <p>I was unfaithful. I lied. And for what? For nothing. It cost me my sweetheart, my soulmate, the one person I feel safe with, the person who matters most to me in this world.</p>
+
+      <p>I treated you in ways you never deserved, Dioca, and I own every bit of it. No excuses.</p>
+
+      <p>If you can find it somewhere in your heart, please forgive me. Give me the chance to show you I can be the man you fell in love with again. I don't want to lose you. I want to build a life with you.</p>
+
+      <p class="paper-sign hand">I'm sorry, baby. Please forgive me.<br>I love you so much.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============ TO FIX ============ -->
+<section class="fix" id="to-fix" aria-labelledby="fix-title">
+  <div class="fix-head">
+    <h2 id="fix-title">Ten things I'll do differently</h2>
+    <p>I broke something precious. This is how I plan to put it back together, one piece at a time.</p>
+  </div>
+
+  <div class="fix-body">
+    <div class="fix-heart" aria-hidden="true">
+      <svg viewBox="0 0 200 190">
+        <path class="heart-shape" d="M100 175 C 40 130, 5 95, 15 55 C 25 15, 80 10, 100 50 C 120 10, 175 15, 185 55 C 195 95, 160 130, 100 175 Z"/>
+        <g class="cracks">
+          <path d="M100 50 L95 70 L104 88 L96 108"/>
+          <path d="M96 108 L103 128 L98 148 L100 175"/>
+          <path d="M95 70 L75 64 L60 72"/>
+          <path d="M104 88 L125 80 L140 86"/>
+          <path d="M60 72 L42 60 L30 66"/>
+          <path d="M140 86 L160 70 L172 74"/>
+          <path d="M96 108 L76 112 L62 126"/>
+          <path d="M103 128 L124 124 L138 134"/>
+          <path d="M62 126 L50 110"/>
+          <path d="M138 134 L152 118"/>
+        </g>
+      </svg>
+      <p class="hand fix-count"><span id="mended">0</span> of 10 mended</p>
+      <p class="fix-note">They mend broken pottery with gold in Japan. The cracks end up being the strongest part.</p>
+    </div>
+
+    <ol class="promises">
+      <li><span>I will tell you the truth, even when it's hard and even when it makes me look bad.</span></li>
+      <li><span>I will be faithful to you. Completely. No grey areas, no secrets.</span></li>
+      <li><span>You will come first. Friends and grooves will never again come before you.</span></li>
+      <li><span>When you need me, especially at night, I'll be there. Not later. There.</span></li>
+      <li><span>My phone, my plans and where I am will never be a mystery to you.</span></li>
+      <li><span>I'll listen to understand you, not to defend myself.</span></li>
+      <li><span>When we disagree, I'll stay calm, give you space when you ask for it, and always come back to fix it.</span></li>
+      <li><span>I'll show up for your dreams the way you've shown up for mine. The business, the tenders, the mine.</span></li>
+      <li><span>I'll earn back your 14 reasons, one by one, and give you new ones to add.</span></li>
+      <li><span>I'll prove all of this with what I do every day, not just with words on a page.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ GALLERY ============ -->
+<section class="gallery" id="gallery" aria-labelledby="gallery-title">
+  <div class="gallery-head">
+    <h2 id="gallery-title">Us, mostly</h2>
+    <p>A few of my favourite days, hung up where I can see them. Tap any of them.</p>
+  </div>
+  <div class="lines" id="lines"></div>
+</section>
+
+<!-- ============ THE INVITE ============ -->
+<section class="invite" id="invite" aria-labelledby="invite-title">
+  <div class="invite-card">
+    <p class="eyebrow">an invitation</p>
+    <h2 id="invite-title">Saturday, 10 October</h2>
+    <p class="invite-time">13:30</p>
+
+    <div class="invite-words">
+      <p>Please accept my apology. I'd love to see you on Saturday. I've booked a table for us at half past one.</p>
+      <p>Let me take that time to show you, face to face, how deeply sorry I am. I want to make this right between us.</p>
+      <p>And if you'd wear a beautiful dress for me, I'd love that. That day, you're my princess.</p>
+    </div>
+
+    <button class="accept" id="accept" type="button" aria-controls="reservation" aria-expanded="false">Accept</button>
+  </div>
+
+  <div class="reservation" id="reservation" hidden>
+    <p class="hand res-pre">thank you. here's our reservation ♡</p>
+    <div class="res-pdf" id="res-pdf"></div>
+    <div class="res-card" id="res-card">
+      <div class="res-row"><span>Guest of honour</span><span>Dioca</span></div>
+      <div class="res-row"><span>Date</span><span>Saturday, 10 October 2026</span></div>
+      <div class="res-row"><span>Time</span><span>13:30</span></div>
+      <div class="res-row"><span>Table for</span><span>two</span></div>
+      <div class="res-row"><span>Dress code</span><span>beautiful dress, princess</span></div>
+    </div>
+  </div>
+  <div class="petals" id="petals" aria-hidden="true"></div>
+</section>
+
+<footer class="end">
+  <p class="hand">see you Saturday, my love</p>
+</footer>
+
+<dialog class="lightbox" id="lightbox" aria-label="Photo viewer">
+  <button class="lb-close" type="button" aria-label="Close">×</button>
+  <button class="lb-prev" type="button" aria-label="Previous">‹</button>
+  <div class="lb-media" id="lb-media"></div>
+  <button class="lb-next" type="button" aria-label="Next">›</button>
+</dialog>
+
+<script src="script.js"></script>
+</body>
+</html>
