@@ -57,6 +57,14 @@
     });
   }
 
+  function armed(btn, label) {
+    if (btn.dataset.armed === '1') { btn.dataset.armed = ''; return true; }
+    const old = btn.innerHTML;
+    btn.dataset.armed = '1'; btn.innerHTML = label; btn.classList.add('armed');
+    setTimeout(() => { if (btn.isConnected && btn.dataset.armed === '1') { btn.dataset.armed = ''; btn.innerHTML = old; btn.classList.remove('armed'); } }, 3000);
+    return false;
+  }
+
   const getPath = (obj, path) => path.reduce((o, k) => (o == null ? o : o[k]), obj);
   const setPath = (obj, path, v) => { const last = path[path.length - 1]; getPath(obj, path.slice(0, -1))[last] = v; };
 
@@ -228,7 +236,7 @@
     }
     else if (b.dataset.sdel) {
       const i = +b.dataset.sdel;
-      if (!confirm('Delete this section? You can add it back later, but its content will be gone.')) return;
+      if (!armed(b, 'Delete?')) return;
       site.sections.splice(i, 1); renderForm(); push();
     }
   });
@@ -265,9 +273,9 @@
     $('.work').dataset.tab = b.dataset.tab;
   }));
 
-  $('#reset').addEventListener('click', async () => {
+  $('#reset').addEventListener('click', async e => {
+    if (!armed(e.currentTarget, 'Tap again to clear everything')) return;
     $('.more').open = false;
-    if (!confirm('Start this template over? Your words and photos for it will be cleared from this device.')) return;
     await db.del(key);
     site = clone(T[key].site);
     renderForm(); push(true);
