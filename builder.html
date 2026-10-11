@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keepsake Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Gochi+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="builder.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="index.html" aria-label="All templates"><span class="brand-mark">♥</span><span class="brand-name">Keepsake</span></a>
+    <label class="tpl-pick">
+      <span class="sr">Template</span>
+      <select id="tpl"></select>
+    </label>
+    <div class="bar-actions">
+      <div class="seg" role="group" aria-label="Preview size">
+        <button type="button" data-view="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" data-view="phone" aria-pressed="false">Phone</button>
+      </div>
+      <details class="more">
+        <summary>Project</summary>
+        <div class="menu">
+          <button type="button" id="save-json">Save project file</button>
+          <label class="menu-file">Open project file<input type="file" id="load-json" accept="application/json,.json"></label>
+          <button type="button" id="reset">Start this template over</button>
+        </div>
+      </details>
+      <button class="primary" type="button" id="download">Download site</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-tab="edit">Edit</button>
+    <button type="button" role="tab" aria-selected="false" data-tab="preview">Preview</button>
+  </div>
+
+  <main class="work" data-tab="edit">
+    <section class="panel" aria-label="Edit content">
+      <div class="card who">
+        <h2>Who's it for?</h2>
+        <div class="row2">
+          <label class="f"><span>Their name</span><input type="text" id="to" autocomplete="off"></label>
+          <label class="f"><span>Your name</span><input type="text" id="from" autocomplete="off"></label>
+        </div>
+        <p class="hint">Write <code>{to}</code> or <code>{from}</code> anywhere and it becomes the name.</p>
+      </div>
+      <div id="sections"></div>
+      <div class="card add">
+        <label class="f"><span>Add a section</span>
+          <span class="add-row"><select id="add-type"></select><button type="button" id="add-btn">Add</button></span>
+        </label>
+      </div>
+      <p class="saved hint" id="saved" aria-live="polite"></p>
+    </section>
+
+    <section class="stage" aria-label="Live preview">
+      <div class="frame-wrap" data-view="desktop">
+        <iframe id="preview" title="Live preview" src="about:blank"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="engine/templates.js"></script>
+  <script src="builder.js"></script>
+</body>
+</html>

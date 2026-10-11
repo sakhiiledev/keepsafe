@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="engine/engine.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script src="engine/templates.js"></script>
+  <script src="engine/engine.js"></script>
+  <script>
+    (() => {
+      const t = new URLSearchParams(location.search).get('t');
+      const tpl = window.KEEPSAKE_TEMPLATES[t] || window.KEEPSAKE_TEMPLATES.anniversary;
+      Keepsake.render(JSON.parse(JSON.stringify(tpl.site)));
+      window.addEventListener('message', e => {
+        if (e.origin !== location.origin || !e.data || e.data.type !== 'keepsake:site') return;
+        const y = window.scrollY;
+        Keepsake.render(e.data.site);
+        requestAnimationFrame(() => window.scrollTo(0, y));
+      });
+      if (window.parent !== window) window.parent.postMessage({ type: 'keepsake:ready' }, location.origin);
+    })();
+  </script>
+</body>
+</html>
