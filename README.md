@@ -29,8 +29,3 @@ then visit http://localhost:8000
 - **Bouquet video:** save it as `assets/media/bouquet.mp4`.
 - **Text:** all wording lives in `index.html`.
 - **Photos/videos:** optimised copies live in `assets/media/`. The originals are in `gallery/`.
-
-## Site closed
-
-The site is currently switched off: `vercel.json` sends every URL to a 404 error page.
-To turn it back on, delete `vercel.json` and push.
