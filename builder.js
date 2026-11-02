@@ -140,7 +140,7 @@
   function renderForm() {
     $('#to').value = site.to || '';
     $('#from').value = site.from || '';
-    const openState = $$('.sec-card').map(d => d.open);
+    const openState = $$('#sections .sec-card').map(d => d.open);
     $('#sections').innerHTML = site.sections.map((s, i) => {
       const sc = SCHEMA[s.type];
       if (!sc) return '';
@@ -160,7 +160,10 @@
         <div class="sec-body">${styleSel}${sc.fields.map(fd => fieldHTML(fd, ['sections', i])).join('')}</div>
       </details>`;
     }).join('');
+    afterForm();
   }
+
+  function afterForm() { if (typeof window.KB_onForm === 'function') window.KB_onForm(); }
 
   function renderAddMenu() {
     $('#add-type').innerHTML = Object.entries(SCHEMA).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
@@ -229,10 +232,10 @@
     else if (b.dataset.smove) {
       const i = +b.dataset.smove, j = i + (+b.dataset.dir);
       if (j < 0 || j >= site.sections.length) return;
-      const open = $$('.sec-card').map(d => d.open);
+      const open = $$('#sections .sec-card').map(d => d.open);
       [site.sections[i], site.sections[j]] = [site.sections[j], site.sections[i]];
       [open[i], open[j]] = [open[j], open[i]];
-      renderForm(); $$('.sec-card').forEach((d, k) => { d.open = open[k]; }); push();
+      renderForm(); $$('#sections .sec-card').forEach((d, k) => { d.open = open[k]; }); push();
     }
     else if (b.dataset.sdel) {
       const i = +b.dataset.sdel;
@@ -247,7 +250,7 @@
     const closingAt = site.sections.findIndex(x => x.type === 'closing');
     site.sections.splice(closingAt === -1 ? site.sections.length : closingAt, 0, s);
     renderForm();
-    const cards = $$('.sec-card');
+    const cards = $$('#sections .sec-card');
     const card = cards[closingAt === -1 ? cards.length - 1 : closingAt];
     card.open = true; card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     push();
@@ -346,6 +349,8 @@
     }
   });
 
+  window.KB = { getSite: () => site, push, toast, key: () => key, renderForm, downloadBlob: (b, n) => downloadBlob(b, n), slug: s => slug(s) };
+
   /* ---------- boot ---------- */
   function loadFrame() { ready = false; frame.src = `preview.html?t=${key}`; }
 
@@ -354,7 +359,7 @@
     renderAddMenu();
     site = (await db.get(key)) || clone(T[key].site);
     renderForm();
-    const first = $('.sec-card'); if (first) first.open = true;
+    const first = $('#sections .sec-card'); if (first) first.open = true;
     loadFrame();
   })();
 })();

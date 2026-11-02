@@ -13,6 +13,20 @@ Pick an occasion, add your words and photos, and download a one-of-a-kind websit
 | Valentine | Pink and red, floating hearts | "Will you be my Valentine?" where the No button runs away |
 | Ask out | Periwinkle and sunshine | Dodging No button, then they pick the first date |
 
+## Customising the look
+
+The builder's **Look** panel lets the customer change:
+
+- **Colours:** 12 palettes, or pick each colour (background, soft colour, text, accent, second accent, cards, story background). Text on buttons and the story band switches between light and dark automatically for contrast.
+- **Fonts:** 14 tested pairings, or choose the heading, body and handwriting fonts separately from 16 / 14 / 12 Google Fonts.
+- **Type:** heading style (normal, all caps, italic), title size and text size.
+
+The choices are saved in `site.style` and travel with the downloaded page.
+
+## Make video
+
+**Make video** turns the page into a short video in the browser (no server): title, counter, story chapters, memories, gallery, reasons one by one, letter, question, invite and closing, in the chosen colours and fonts. Portrait 9:16, square or landscape; slow/normal/quick pace; optional song with fade in and out. Chrome, Edge and Safari save MP4; other browsers save WebM. Recording runs in real time, so the tab must stay open.
+
 ## Pages
 
 - `index.html` is the template picker with live previews.

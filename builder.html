@@ -29,6 +29,7 @@
           <button type="button" id="reset">Start this template over</button>
         </div>
       </details>
+      <button class="secondary" type="button" id="make-video">Make video</button>
       <button class="primary" type="button" id="download">Download site</button>
     </div>
   </header>
@@ -48,6 +49,7 @@
         </div>
         <p class="hint">Write <code>{to}</code> or <code>{from}</code> anywhere and it becomes the name.</p>
       </div>
+      <div id="look"></div>
       <div id="sections"></div>
       <div class="card add">
         <label class="f"><span>Add a section</span>
@@ -67,6 +69,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="engine/templates.js"></script>
+  <script src="engine/catalog.js"></script>
   <script src="builder.js"></script>
+  <script src="look.js"></script>
+  <script src="video.js"></script>
 </body>
 </html>

@@ -552,6 +552,51 @@
     $$('.peg:not([disabled])', root).forEach(p => p.addEventListener('click', () => { show(+p.dataset.i); lightbox.showModal(); }));
   }
 
+
+  /* ---------------- custom look (colours + type) ---------------- */
+  function hexRgb(h) {
+    const m = String(h || '').replace('#', '').match(/^([0-9a-f]{6}|[0-9a-f]{3})$/i);
+    if (!m) return null;
+    let x = m[1]; if (x.length === 3) x = x.split('').map(c => c + c).join('');
+    return [0, 2, 4].map(i => parseInt(x.slice(i, i + 2), 16) / 255);
+  }
+  function lum(h) {
+    const c = hexRgb(h); if (!c) return .5;
+    const [r, g, b] = c.map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+    return .2126 * r + .7152 * g + .0722 * b;
+  }
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+
+  function applyStyle(st) {
+    const root = document.documentElement;
+    root.removeAttribute('style');
+    const set = (k, v) => { if (v != null && v !== '') root.style.setProperty(k, v); };
+    const c = st.colors;
+    if (c) {
+      ['bg', 'bg2', 'ink', 'accent', 'accent2', 'card'].forEach(k => set('--' + k, c[k]));
+      if (c.ink && c.bg) set('--muted', `color-mix(in srgb, ${c.ink} 62%, ${c.bg})`);
+      if (c.accent) set('--on-accent', contrast(c.accent, '#ffffff') >= 3 ? '#ffffff' : '#1a1a1a');
+      if (c.story) {
+        set('--story', c.story);
+        const ink = contrast(c.story, '#F4EFEA') >= 4.5 ? '#F4EFEA' : '#1a1a1a';
+        set('--story-ink', ink);
+        const sa = [c.accent2, c.accent].filter(Boolean).sort((a, b) => contrast(b, c.story) - contrast(a, c.story))[0];
+        set('--story-accent', sa);
+      }
+    }
+    const f = st.fonts;
+    if (f) {
+      if (f.display) { set('--display', `"${f.display.family}", ${f.display.fallback}`); set('--disp-w', f.display.w); }
+      if (f.body) set('--body', `"${f.body.family}", ${f.body.fallback}`);
+      if (f.hand) { set('--hand', `"${f.hand.family}", ${f.hand.fallback}`); set('--hs', f.hand.hs); }
+    }
+    if (st.textSize) set('--ts', st.textSize);
+    if (st.titleSize) set('--tts', st.titleSize);
+    if (st.headings === 'caps') { set('--head-tt', 'uppercase'); set('--head-ls', '.06em'); set('--head-scale', '.82'); }
+    if (st.headings === 'italic') set('--head-fs', 'italic');
+    if (st.align === 'left') set('--align', 'left');
+  }
+
   /* ---------------- render ---------------- */
   function render(site, mount) {
     cleanups.forEach(fn => { try { fn(); } catch (_) {} });
@@ -567,8 +612,10 @@
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
-    const href = `https://fonts.googleapis.com/css2?${theme.fonts}&display=swap`;
+    const st = SITE.style || {};
+    const href = `https://fonts.googleapis.com/css2?${theme.fonts}${st.fontQuery ? '&' + st.fontQuery : ''}&display=swap`;
     if (link.href !== href) link.href = href;
+    applyStyle(st);
     document.title = SITE.title || (SITE.to ? `For ${SITE.to}` : 'For you');
 
     const app = mount || document.getElementById('app');
