@@ -8,7 +8,12 @@
     birthday:    { name: 'Birthday',    fonts: 'family=Bagel+Fat+One&family=DM+Sans:opsz,wght@9..40,400..600&family=Gaegu:wght@700',                         ambient: 'confetti', burst: 'confetti' },
     proposal:    { name: 'Proposal',    fonts: 'family=Italiana&family=Lora:ital,wght@0,400..600;1,400&family=Pinyon+Script',                               ambient: 'petals',   burst: 'petals' },
     valentine:   { name: 'Valentine',   fonts: 'family=Shrikhand&family=Nunito:wght@400..700&family=Gochi+Hand',                                            ambient: 'hearts',   burst: 'hearts' },
-    askout:      { name: 'Ask out',     fonts: 'family=Fredoka:wght@400..700&family=Outfit:wght@300..600&family=Patrick+Hand',                              ambient: 'sparkles', burst: 'confetti' }
+    askout:      { name: 'Ask out',     fonts: 'family=Fredoka:wght@400..700&family=Outfit:wght@300..600&family=Patrick+Hand',                              ambient: 'sparkles', burst: 'confetti' },
+    lobola:      { name: 'Lobola',      fonts: 'family=Abril+Fatface&family=Crimson+Pro:ital,wght@0,300..600;1,300..500&family=Dancing+Script:wght@500..700', ambient: 'sparkles', burst: 'confetti' },
+    wedding:     { name: 'Traditional wedding', fonts: 'family=Playfair+Display:ital,wght@0,400..800;1,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..600;1,8..60,300..500&family=Dancing+Script:wght@500..700', ambient: 'confetti', burst: 'confetti' },
+    whitewedding:{ name: 'White wedding', fonts: 'family=Italiana&family=Lora:ital,wght@0,400..600;1,400&family=Pinyon+Script', ambient: 'petals', burst: 'petals' },
+    invitation:  { name: 'Wedding invitation', fonts: 'family=DM+Serif+Display:ital@0;1&family=Jost:ital,wght@0,300..600;1,300..500&family=Caveat:wght@500..700', ambient: 'sparkles', burst: 'petals' },
+    savedate:    { name: 'Save the date', fonts: 'family=Fraunces:ital,opsz,wght@0,9..144,300..800;1,9..144,300..800&family=Literata:ital,opsz,wght@0,7..72,300..600;1,7..72,300..500&family=Indie+Flower', ambient: 'confetti', burst: 'confetti' }
   };
 
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -22,7 +27,10 @@
   let cleanups = [];
   const onCleanup = fn => cleanups.push(fn);
 
-  const fill = s => esc(s).replace(/\{to\}/g, esc(SITE.to || '')).replace(/\{from\}/g, esc(SITE.from || ''));
+  const WORDS = { greet: 'Welcome', invite: "You're invited", thanks: 'Thank you', lobola: 'lobola', wedding: 'wedding', culture: '', lang: '', yes: "I'll be there", no: "Can't make it" };
+  const word = k => (SITE.words && SITE.words[k]) || WORDS[k] || '';
+  const fill = s => esc(s).replace(/\{to\}/g, esc(SITE.to || '')).replace(/\{from\}/g, esc(SITE.from || ''))
+    .replace(/\{(greet|invite|thanks|lobola|wedding|culture|lang|yes|no)\}/g, (_, k) => esc(word(k)));
   const paras = t => String(t || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(p => `<p>${fill(p)}</p>`).join('');
   const lines = t => Array.isArray(t) ? t : String(t || '').split('\n').map(x => x.trim()).filter(Boolean);
   const photo = (src, alt = '') => src
@@ -33,7 +41,8 @@
   /* ---------------- section renderers ---------------- */
   const R = {
     hero: s => `
-      <header class="sec s-hero">
+      <header class="sec s-hero${s.bg ? ' has-bg' : ''}">
+        ${s.bg ? `<div class="hero-bg" style="background-image:url('${esc(s.bg)}')" aria-hidden="true"></div>` : ''}
         <canvas class="amb" aria-hidden="true"></canvas>
         <div class="hero-in">
           ${s.kicker ? `<p class="hand kick">${fill(s.kicker)}</p>` : ''}
@@ -604,6 +613,7 @@
     SITE = site || {};
     const theme = THEMES[SITE.theme] || THEMES.apology;
     document.documentElement.dataset.theme = THEMES[SITE.theme] ? SITE.theme : 'apology';
+    document.documentElement.dataset.culture = SITE.culture || '';
 
     let link = document.getElementById('kp-fonts');
     if (!link) {
@@ -631,9 +641,16 @@
     $$('.s-plan', app).forEach(initPlan);
     $$('.s-invite', app).forEach(r => initInvite(r, theme));
     $$('.s-gallery', app).forEach(initGallery);
+    EXT.forEach(x => { try { if (x.init) x.init(app, theme, SITE); } catch (e) { console.error(e); } });
     initReveals();
   }
 
-  window.Keepsake = { render, THEMES };
+  const EXT = [];
+  function register(def) {
+    Object.assign(R, def.sections || {});
+    EXT.push(def);
+  }
+  window.Keepsake = { render, THEMES, register, h: { esc, fill, paras, lines, photo, head, burst, onCleanup, rnd, clamp, $, $$, word, reduce, site: () => SITE } };
+  (window.KEEPSAKE_EXT || []).forEach(register);
   if (window.SITE && document.getElementById('app')) render(window.SITE);
 })();

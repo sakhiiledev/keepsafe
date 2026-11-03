@@ -99,7 +99,10 @@
 
   /* ---------- content → scenes ---------- */
   function buildScenes(site) {
-    const fill = s => String(s || '').replace(/\{to\}/g, site.to || '').replace(/\{from\}/g, site.from || '');
+    const W0 = { greet: 'Welcome', invite: "You're invited", thanks: 'Thank you', lobola: 'lobola', wedding: 'wedding', culture: '', lang: '', yes: "I'll be there", no: "Can't make it" };
+    const wd = Object.assign({}, W0, site.words || {});
+    const fill = s => String(s || '').replace(/\{to\}/g, site.to || '').replace(/\{from\}/g, site.from || '').replace(/\{(greet|invite|thanks|lobola|wedding|culture|lang|yes|no)\}/g, (_, k) => wd[k] || '');
+    const fmt = v => { const d = new Date(v); return isNaN(d) ? (v || '') : d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); };
     const firstSentences = (t, n = 2) => {
       const parts = fill(t).replace(/\n+/g, ' ').match(/[^.!?]+[.!?]*/g) || [];
       return parts.slice(0, n).join(' ').trim();
@@ -108,7 +111,16 @@
     const out = [];
     for (const s of (site.sections || [])) {
       if (!s || s.on === false) continue;
-      if (s.type === 'hero') out.push({ k: 'title', d: 4, kicker: fill(s.kicker), title: fill(s.title), sub: firstSentences(s.sub, 2) });
+      if (s.type === 'hero') out.push({ k: 'title', d: 4, kicker: fill(s.kicker), title: fill(s.title), sub: fill(s.sub).replace(/\n+/g, ' · '), img: s.bg || '' });
+      else if (s.type === 'countdown') {
+        const dt = new Date(s.date);
+        if (!isNaN(dt)) { const days = Math.max(0, Math.ceil((dt - Date.now()) / 86400000)); out.push({ k: 'big', d: 3.8, kicker: fill(s.label), big: String(days), unit: days === 1 ? 'day to go' : 'days to go', sub: fmt(s.date) }); }
+      } else if (s.type === 'couple') out.push({ k: 'title', d: 4, kicker: fill(s.heading), title: `${fill(s.name1)} & ${fill(s.name2)}`, sub: [fill(s.family1), fill(s.family2)].filter(Boolean).join(' · '), img: '' });
+      else if (s.type === 'cattle') out.push({ k: 'big', d: 4.4, kicker: fill(s.heading), big: String(parseInt(s.count, 10) || 1), unit: fill(s.unit || 'cattle'), sub: fill(s.stamp) });
+      else if (s.type === 'programme') { const it = lines(s.items).slice(0, 5).map(fill); if (it.length) out.push({ k: 'list', d: .9 + it.length * 2, title: fill(s.heading), items: it }); }
+      else if (s.type === 'venue') out.push({ k: 'invite', d: 4.4, kicker: fill(s.heading || 'where'), date: fill(s.name), time: '', place: [fill(s.time), fill(s.address)].filter(Boolean).join(' · ') });
+      else if (s.type === 'rsvp') out.push({ k: 'heading', d: 3, title: s.deadline ? `Kindly RSVP by ${fill(s.deadline)}` : 'Kindly RSVP' });
+      else if (s.type === 'scratch') out.push({ k: 'title', d: 4.2, kicker: fill(s.above), title: fill(s.reveal), sub: fill(s.below), img: '' });
       else if (s.type === 'story') {
         if (s.heading) out.push({ k: 'heading', d: 2.4, title: fill(s.heading) });
         (s.chapters || []).forEach(c => out.push({ k: 'photo', d: 4.2, img: c.photo, label: fill(c.label), text: firstSentences(c.text, 2) }));
@@ -242,16 +254,22 @@
       if (s.k === 'title' || s.k === 'heading' || s.k === 'closing') {
         bgFill(c.bg); particles(lt + s.d, lum(c.bg) < .4);
         const cy = H / 2;
+        const bgImg = s.k === 'title' && s.img && imgs.get(s.img);
+        if (bgImg) {
+          cover(ctx, bgImg, 0, 0, W, H, 1.1 - .08 * ease(p), 0, 0);
+          ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 0, W, H);
+        }
         if (s.k === 'title') {
-          ctx.fillStyle = c.accent; ctx.globalAlpha = fadeIn(p, 0, .15);
-          const k = fit(ctx, s.kicker, Hd, 70 * U, maxW, 1); ctx.font = Hd(k.size); drawLines(ctx, k.lines, W / 2, cy - 190 * U, 0);
-          ctx.globalAlpha = fadeIn(p, .08, .2); ctx.fillStyle = c.ink;
-          const t = fit(ctx, T(s.title), D, 230 * U, maxW, 3, 40); ctx.font = D(t.size);
+          const t = fit(ctx, T(s.title), D, 230 * U, maxW, 3, 40);
           const lh = t.size * 1.0; const ty = cy - (t.lines.length - 1) * lh / 2 + t.size * .3 - 40 * U;
+          ctx.fillStyle = bgImg ? '#ffffff' : c.accent; ctx.globalAlpha = fadeIn(p, 0, .15);
+          const k = fit(ctx, s.kicker, Hd, 70 * U, maxW, 1); ctx.font = Hd(k.size); drawLines(ctx, k.lines, W / 2, ty - t.size * .95 - 24 * U, 0);
+          ctx.globalAlpha = fadeIn(p, .08, .2); ctx.fillStyle = bgImg ? '#ffffff' : c.ink;
+          ctx.font = D(t.size);
           ctx.translate(0, (1 - easeOut(fadeIn(p, .08, .25))) * 40 * U);
           drawLines(ctx, t.lines, W / 2, ty, lh);
           ctx.setTransform(1, 0, 0, 1, 0, 0);
-          if (s.sub) { ctx.globalAlpha = fadeIn(p, .3, .2); ctx.fillStyle = c.ink; ctx.font = B(40 * U, 400, true); drawLines(ctx, wrap(ctx, s.sub, maxW * .85), W / 2, ty + (t.lines.length - 1) * lh + 110 * U, 56 * U); }
+          if (s.sub) { ctx.globalAlpha = fadeIn(p, .3, .2); ctx.fillStyle = bgImg ? 'rgba(255,255,255,.92)' : c.ink; ctx.font = B(40 * U, 400, true); drawLines(ctx, wrap(ctx, s.sub, maxW * .85), W / 2, ty + (t.lines.length - 1) * lh + 110 * U, 56 * U); }
         } else {
           ctx.globalAlpha = fadeIn(p, 0, .25); ctx.fillStyle = s.k === 'closing' ? c.accent : c.ink;
           const fn = s.k === 'closing' ? Hd : D;

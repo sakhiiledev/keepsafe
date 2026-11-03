@@ -98,5 +98,77 @@ window.KEEPSAKE_CATALOG = (() => {
 
   const colorLabels = { bg: 'Background', bg2: 'Soft colour', ink: 'Text', accent: 'Accent', accent2: 'Second accent', card: 'Cards', story: 'Story background' };
 
-  return { fonts, find, pairings, palettes, themeDefaults, colorLabels };
+  // South African cultures, one per official spoken language.
+  // Words are a friendly starting point; families should check spelling and usage.
+  const cultures = [
+    { id: 'zulu', name: 'Zulu', lang: 'isiZulu', pattern: 'beads', pairing: 'poster',
+      c: { bg: '#FBF5EC', bg2: '#F1D9B5', ink: '#1C1714', accent: '#C1121F', accent2: '#1D4E89', card: '#FFFFFF', story: '#1C1714' },
+      img: 'assets/culture/zulu-drakensberg.jpg', detail: ['assets/culture/zulu-beadwork.jpg', 'assets/culture/woven-baskets.jpg'],
+      w: { greet: 'Sanibonani', invite: 'Siyanimema', thanks: 'Siyabonga', lobola: 'ilobolo', wedding: 'umshado', yes: 'Ngizofika', no: 'Angeke ngikwazi' } },
+    { id: 'xhosa', name: 'Xhosa', lang: 'isiXhosa', pattern: 'braid', pairing: 'editorial',
+      c: { bg: '#F7F5F1', bg2: '#E9DCCB', ink: '#121212', accent: '#D9601E', accent2: '#121212', card: '#FFFFFF', story: '#121212' },
+      img: 'assets/culture/xhosa-coast.jpg', detail: ['assets/culture/xhosa-cattle-coast.jpg', 'assets/culture/beadwork-patterns.jpg'],
+      w: { greet: 'Molweni', invite: 'Siyanimema', thanks: 'Enkosi', lobola: 'ikhazi', wedding: 'umtshato', yes: 'Ndiza kuza', no: 'Andizukukwazi' } },
+    { id: 'ndebele', name: 'Ndebele', lang: 'isiNdebele', pattern: 'ndebele', pairing: 'bold',
+      c: { bg: '#F6F6F1', bg2: '#E4E7F2', ink: '#111111', accent: '#1F5FD1', accent2: '#F2B705', card: '#FFFFFF', story: '#111111' },
+      img: 'assets/culture/ndebele-painted-house.jpg', detail: ['assets/culture/beadwork-patterns.jpg'],
+      w: { greet: 'Lotjhani', invite: 'Siyanimema', thanks: 'Siyathokoza', lobola: 'lobola', wedding: 'umtjhado', yes: "I'll be there", no: "Can't make it" } },
+    { id: 'swati', name: 'Swati', lang: 'siSwati', pattern: 'emahiya', pairing: 'gallery',
+      c: { bg: '#FFF6F2', bg2: '#F6D3C8', ink: '#2A0B0B', accent: '#B5121B', accent2: '#1C4A86', card: '#FFFFFF', story: '#2A0B0B' },
+      img: 'assets/culture/swati-valley.jpg', detail: ['assets/culture/woven-baskets.jpg'],
+      w: { greet: 'Sanibonani', invite: 'Siyanimema', thanks: 'Siyabonga', lobola: 'lobola', wedding: 'umtsimba', yes: "I'll be there", no: "Can't make it" } },
+    { id: 'sotho', name: 'Sotho', lang: 'Sesotho', pattern: 'shweshwe', pairing: 'storybook',
+      c: { bg: '#EEF1F8', bg2: '#CFD8EE', ink: '#13203D', accent: '#26479A', accent2: '#C9A227', card: '#FFFFFF', story: '#13203D' },
+      img: 'assets/culture/sotho-highlands.jpg', detail: ['assets/culture/sotho-mokorotlo.jpg', 'assets/culture/sotho-village.jpg'],
+      w: { greet: 'Lumelang', invite: 'Re a le memela', thanks: 'Re a leboha', lobola: 'bohali', wedding: 'lenyalo', yes: 'Ke tla ba teng', no: "Can't make it" } },
+    { id: 'tswana', name: 'Tswana', lang: 'Setswana', pattern: 'diamond', pairing: 'modern',
+      c: { bg: '#EDF4FB', bg2: '#C9DEF2', ink: '#0D2740', accent: '#1F72B8', accent2: '#0D2740', card: '#FFFFFF', story: '#0D2740' },
+      img: 'assets/culture/tswana-savanna.jpg', detail: ['assets/culture/woven-baskets.jpg'],
+      w: { greet: 'Dumelang', invite: 'Re a lo laletsa', thanks: 'Re a leboga', lobola: 'bogadi', wedding: 'lenyalo', yes: 'Ke tla nna teng', no: "Can't make it" } },
+    { id: 'pedi', name: 'Pedi', lang: 'Sepedi', pattern: 'hempe', pairing: 'party',
+      c: { bg: '#FFF1F6', bg2: '#FFD2E4', ink: '#2B0D2E', accent: '#D6006E', accent2: '#F28C28', card: '#FFFFFF', story: '#2B0D2E' },
+      img: 'assets/culture/beadwork-patterns.jpg', detail: ['assets/culture/venda-baobab.jpg'],
+      w: { greet: 'Thobela', invite: 'Re a le laletša', thanks: 'Ke a leboga', lobola: 'magadi', wedding: 'lenyalo', yes: 'Ke tla ba gona', no: "Can't make it" } },
+    { id: 'venda', name: 'Venda', lang: 'Tshivenda', pattern: 'minwenda', pairing: 'retro',
+      c: { bg: '#151515', bg2: '#2A2A2A', ink: '#F6F1E7', accent: '#F4C430', accent2: '#E63946', card: '#1F1F1F', story: '#0B0B0B' },
+      img: 'assets/culture/venda-baobab.jpg', detail: ['assets/culture/woven-baskets.jpg'],
+      w: { greet: 'Ndaa! Aa!', invite: 'Ri a ni ramba', thanks: 'Ndo livhuwa', lobola: 'mamalo', wedding: 'mbingano', yes: "I'll be there", no: "Can't make it" } },
+    { id: 'tsonga', name: 'Tsonga', lang: 'Xitsonga', pattern: 'xibelani', pairing: 'playful',
+      c: { bg: '#FFF8E8', bg2: '#FFE0A8', ink: '#2B1B0E', accent: '#E06D00', accent2: '#1F9A8A', card: '#FFFFFF', story: '#2B1B0E' },
+      img: 'assets/culture/woven-baskets.jpg', detail: ['assets/culture/tswana-savanna.jpg'],
+      w: { greet: 'Avuxeni', invite: 'Hi mi rhamba', thanks: 'Inkomu', lobola: 'lovolo', wedding: 'vukati', yes: "I'll be there", no: "Can't make it" } },
+    { id: 'afrikaans', name: 'Afrikaans', lang: 'Afrikaans', pattern: 'fynbos', pairing: 'classic',
+      c: { bg: '#EEF0EA', bg2: '#D6DCCB', ink: '#22302A', accent: '#8A5A3B', accent2: '#C9708A', card: '#FBFBF8', story: '#22302A' },
+      img: 'assets/culture/afrikaans-cape-dutch.jpg', detail: ['assets/culture/afrikaans-vineyard.jpg'],
+      w: { greet: 'Welkom', invite: 'Ons nooi julle uit', thanks: 'Baie dankie', lobola: 'lobola', wedding: 'troue', yes: 'Ons sal daar wees', no: 'Ons kan ongelukkig nie' } },
+    { id: 'english', name: 'English', lang: 'English', pattern: 'classic', pairing: 'vows',
+      c: { bg: '#FAFAF7', bg2: '#E6E9E2', ink: '#1E1E1E', accent: '#9C7C38', accent2: '#8FA596', card: '#FFFFFF', story: '#1E1E1E' },
+      img: 'assets/culture/english-protea.jpg', detail: ['assets/culture/afrikaans-vineyard.jpg'],
+      w: { greet: 'Welcome', invite: "You're invited", thanks: 'Thank you', lobola: 'lobola', wedding: 'wedding', yes: "I'll be there", no: "Can't make it" } }
+  ];
+
+  // Apply a culture to a site: colours, fonts, pattern, words and (default) hero photo
+  function applyCulture(site, id, opts = {}) {
+    const cu = cultures.find(c => c.id === id);
+    if (!cu) return site;
+    const prev = cultures.find(c => c.id === site.culture);
+    site.culture = cu.id;
+    site.words = Object.assign({ culture: cu.name, lang: cu.lang }, cu.w);
+    site.pattern = cu.pattern;
+    const pair = pairings.find(p => p.id === cu.pairing);
+    site.style = Object.assign({}, site.style || {}, {
+      colors: Object.assign({}, cu.c), paletteId: 'culture',
+      fonts: { display: find('display', pair.d), body: find('body', pair.b), hand: find('hand', pair.h) }, pairingId: pair.id
+    });
+    site.style.fontQuery = [...new Set(['display', 'body', 'hand'].map(r => site.style.fonts[r].q))].join('&');
+    // swap culture photos only where the photo is still a culture default (never the customer's own)
+    const defaults = new Set(cultures.flatMap(c => [c.img, ...c.detail]));
+    (site.sections || []).forEach(s => {
+      if (s.type === 'hero' && (!s.bg || defaults.has(s.bg)) && s.bg !== '') s.bg = cu.img;
+      if (s.type === 'venue' && (!s.photo || defaults.has(s.photo))) s.photo = cu.detail[0] || cu.img;
+    });
+    return site;
+  }
+
+  return { fonts, find, pairings, palettes, themeDefaults, colorLabels, cultures, applyCulture };
 })();

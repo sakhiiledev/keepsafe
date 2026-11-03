@@ -4,37 +4,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Keepsake</title>
-  <meta name="description" content="Pick a template, add your words and photos, and download a one-of-a-kind website for someone you love.">
+  <meta name="description" content="Love pages, lobola and wedding invitations themed to South Africa's cultures. Add your words and photos, then share.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Gochi+Hand&family=Gloock&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #EEEDF2; --ink: #17161C; --muted: #6A6875; --line: #E1DFE8; --brand: #E0245E; --card: #fff; }
+    :root { --bg: #EEEDF2; --ink: #17161C; --muted: #6A6875; --line: #E1DFE8; --brand: #E0245E; --card: #fff; --gold: #B98A2E; }
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Manrope", system-ui, sans-serif; line-height: 1.5; }
     :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
-    .wrap { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
     header { padding: 22px 0; display: flex; align-items: center; gap: 10px; font-weight: 800; }
     .mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: var(--brand); color: #fff; }
-    .intro { padding: 6vh 0 7vh; max-width: 46rem; }
+    .intro { padding: 5vh 0 4vh; max-width: 48rem; }
     .intro .hand { font-family: "Gochi Hand", cursive; font-size: 1.6rem; color: var(--brand); margin: 0; }
-    h1 { font-family: "Gloock", Georgia, serif; font-weight: 400; font-size: clamp(2.6rem, 1.6rem + 4.6vw, 5.4rem); line-height: 1; letter-spacing: -.02em; margin: .1em 0 .3em; }
-    .intro p.lead { font-size: 1.15rem; color: var(--muted); margin: 0; }
-    .steps { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; padding: 0; list-style: none; font-weight: 700; font-size: .95rem; }
-    .steps li::before { content: attr(data-n); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: .75rem; margin-right: 8px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 22px; padding-bottom: 12vh; }
-    .tpl { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); display: flex; flex-direction: column; transition: transform .3s ease, box-shadow .3s ease; }
+    h1 { font-family: "Gloock", Georgia, serif; font-weight: 400; font-size: clamp(2.6rem, 1.6rem + 4.6vw, 5.2rem); line-height: 1; letter-spacing: -.02em; margin: .1em 0 .3em; }
+    .lead { font-size: 1.15rem; color: var(--muted); margin: 0; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; position: sticky; top: 0; padding: 12px 0; background: var(--bg); z-index: 5; }
+    .tabs button { border: 1px solid var(--line); background: var(--card); padding: 9px 16px; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; color: var(--muted); }
+    .tabs button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .tabs .prem[aria-pressed="true"] { background: linear-gradient(135deg, #8C6420, #D9B25E); border-color: #B98A2E; }
+    .section-title { font-family: "Gloock", Georgia, serif; font-weight: 400; font-size: 1.9rem; margin: 28px 0 14px; display: flex; align-items: baseline; gap: 12px; }
+    .section-title small { font-family: "Manrope", sans-serif; font-size: .95rem; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 22px; padding-bottom: 6vh; }
+    .tpl { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); display: flex; flex-direction: column; transition: transform .3s ease, box-shadow .3s ease; position: relative; }
     .tpl:hover { transform: translateY(-3px); box-shadow: 0 24px 50px rgba(0,0,0,.1); }
+    .tpl.premium { border-color: #E3C98E; box-shadow: 0 0 0 1px #E3C98E inset; }
+    .badge { position: absolute; top: 12px; left: 12px; z-index: 2; background: linear-gradient(135deg, #8C6420, #D9B25E); color: #fff; font-weight: 800; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; box-shadow: 0 6px 14px rgba(140,100,32,.35); }
     .shot { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #ddd; }
     .shot iframe { position: absolute; top: 0; left: 0; width: 1280px; height: 800px; border: 0; transform-origin: 0 0; pointer-events: none; }
-    .info { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .info { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .info h2 { margin: 0; font-size: 1.25rem; }
     .info p { margin: 0; color: var(--muted); font-size: .95rem; flex: 1; }
+    .cults { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .cult { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 10px 4px 6px; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+    .cult i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+    .cult[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
     .acts { display: flex; gap: 10px; margin-top: 8px; }
     .acts a { flex: 1; text-align: center; text-decoration: none; padding: 11px 12px; border-radius: 11px; font-weight: 800; }
     .use { background: var(--brand); color: #fff; box-shadow: 0 6px 16px rgba(224,36,94,.25); }
+    .premium .use { background: linear-gradient(135deg, #8C6420, #C9A04E); box-shadow: 0 6px 16px rgba(140,100,32,.3); }
     .peek { border: 1px solid var(--line); color: var(--ink); }
-    footer { color: var(--muted); font-size: .9rem; padding: 0 0 6vh; }
+    footer { color: var(--muted); font-size: .9rem; padding: 2vh 0 6vh; }
+    footer a { color: var(--muted); }
   </style>
 </head>
 <body>
@@ -42,30 +54,75 @@
     <header><span class="mark" aria-hidden="true">♥</span> Keepsake</header>
     <section class="intro">
       <p class="hand">say it properly,</p>
-      <h1>A little website for someone you love.</h1>
-      <p class="lead">Pick an occasion, add your own words and photos, and download a page they'll scroll through slowly.</p>
-      <ol class="steps"><li data-n="1">Pick a template</li><li data-n="2">Add words & photos</li><li data-n="3">Download & share</li></ol>
+      <h1>Pages for love, lobola and weddings.</h1>
+      <p class="lead">Pick a template and a culture, add your words and photos, and share it with a link, a file or a video. Themes for all 11 official languages, from isiZulu to Afrikaans.</p>
     </section>
-    <main class="grid" id="grid"></main>
-    <footer>Made by LamTech Solutions.</footer>
+    <nav class="tabs" aria-label="Collections">
+      <button type="button" data-cat="all" aria-pressed="true">All</button>
+      <button type="button" data-cat="wedding" aria-pressed="false">Weddings &amp; lobola</button>
+      <button type="button" data-cat="premium" class="prem" aria-pressed="false">Premium invitations</button>
+      <button type="button" data-cat="love" aria-pressed="false">Love notes</button>
+    </nav>
+    <main id="list"></main>
+    <footer>Made by LamTech Solutions. Scenery and cattle photos from Unsplash and Pexels (free licence).</footer>
   </div>
   <script src="engine/templates.js"></script>
+  <script src="engine/templates-heritage.js"></script>
+  <script src="engine/catalog.js"></script>
   <script>
     (() => {
-      const T = window.KEEPSAKE_TEMPLATES;
+      const T = window.KEEPSAKE_TEMPLATES, C = window.KEEPSAKE_CATALOG;
       const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-      const grid = document.getElementById('grid');
-      grid.innerHTML = Object.entries(T).map(([k, t]) => `
-        <article class="tpl">
-          <div class="shot"><iframe src="preview.html?t=${k}" title="${esc(t.name)} preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+      const groups = [
+        ['premium', 'Premium invitations', 'envelope, curtain, candle and scratch openings'],
+        ['wedding', 'Weddings & lobola', 'themed to your culture'],
+        ['love', 'Love notes', 'anniversaries, birthdays, apologies and more']
+      ];
+      const card = (k, t) => {
+        const cur = t.site.culture || '';
+        return `
+        <article class="tpl${t.premium ? ' premium' : ''}" data-k="${k}">
+          ${t.premium ? '<span class="badge">Premium</span>' : ''}
+          <div class="shot"><iframe data-src="preview.html?t=${k}&nocover=1${cur ? '&c=' + cur : ''}" title="${esc(t.name)} preview" tabindex="-1" aria-hidden="true"></iframe></div>
           <div class="info">
             <h2>${esc(t.name)}</h2>
             <p>${esc(t.blurb)}</p>
-            <div class="acts"><a class="peek" href="preview.html?t=${k}" target="_blank" rel="noopener">Preview</a><a class="use" href="builder.html?t=${k}">Use this</a></div>
+            ${t.cultures ? `<div class="cults" role="radiogroup" aria-label="Culture">${C.cultures.map(c => `<button type="button" class="cult" data-c="${c.id}" aria-pressed="${c.id === cur}" title="${esc(c.lang)}"><i style="background:linear-gradient(135deg, ${c.c.accent} 50%, ${c.c.accent2} 50%)"></i>${esc(c.name)}</button>`).join('')}</div>` : ''}
+            <div class="acts"><a class="peek" href="preview.html?t=${k}${cur ? '&c=' + cur : ''}" target="_blank" rel="noopener">Preview</a><a class="use" href="builder.html?t=${k}${cur ? '&c=' + cur : ''}">Use this</a></div>
           </div>
-        </article>`).join('');
+        </article>`;
+      };
+      const list = document.getElementById('list');
+      function draw(cat) {
+        list.innerHTML = groups.filter(g => cat === 'all' || g[0] === cat).map(([id, title, sub]) => {
+          const items = Object.entries(T).filter(([, t]) => t.category === id);
+          return `<h2 class="section-title">${esc(title)} <small>${esc(sub)}</small></h2><div class="grid">${items.map(([k, t]) => card(k, t)).join('')}</div>`;
+        }).join('');
+        lazy(); fit();
+      }
+      // load previews only when cards come into view
+      let io;
+      function lazy() {
+        if (io) io.disconnect();
+        io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { const f = e.target; if (!f.src) f.src = f.dataset.src; io.unobserve(f); } }), { rootMargin: '300px' });
+        document.querySelectorAll('.shot iframe').forEach(f => io.observe(f));
+      }
       const fit = () => document.querySelectorAll('.shot').forEach(s => { s.querySelector('iframe').style.transform = `scale(${s.clientWidth / 1280})`; });
-      fit(); window.addEventListener('resize', fit);
+      window.addEventListener('resize', fit);
+      document.querySelector('.tabs').addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        draw(b.dataset.cat);
+      });
+      list.addEventListener('click', e => {
+        const b = e.target.closest('.cult'); if (!b) return;
+        const card = b.closest('.tpl'), k = card.dataset.k, c = b.dataset.c;
+        card.querySelectorAll('.cult').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        const f = card.querySelector('iframe'); f.dataset.src = `preview.html?t=${k}&nocover=1&c=${c}`; f.src = f.dataset.src;
+        card.querySelector('.peek').href = `preview.html?t=${k}&c=${c}`;
+        card.querySelector('.use').href = `builder.html?t=${k}&c=${c}`;
+      });
+      draw('all');
     })();
   </script>
 </body>

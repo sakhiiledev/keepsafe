@@ -65,6 +65,18 @@
     return false;
   }
 
+  function prep(st) {
+    const C = window.KEEPSAKE_CATALOG;
+    if (st && st.culture && C && !(st.style && st.style.colors)) C.applyCulture(st, st.culture);
+    return st;
+  }
+  function fresh(k) {
+    const st = clone(T[k].site);
+    const c = params.get('c');
+    if (c && T[k].cultures && window.KEEPSAKE_CATALOG) window.KEEPSAKE_CATALOG.applyCulture(st, c);
+    return prep(st);
+  }
+
   const getPath = (obj, path) => path.reduce((o, k) => (o == null ? o : o[k]), obj);
   const setPath = (obj, path, v) => { const last = path[path.length - 1]; getPath(obj, path.slice(0, -1))[last] = v; };
 
@@ -107,6 +119,17 @@
     if (kind === 'text' || kind === 'number' || kind === 'datetime-local') {
       return `<label class="f"><span>${esc(label)}</span><input type="${kind}" data-path='${p}' value="${esc(v ?? '')}"${kind === 'number' ? ' min="1" max="40"' : ''}></label>`;
     }
+    if (kind === 'select') {
+      const opts = def[4] || [];
+      return `<label class="f"><span>${esc(label)}</span><select data-path='${p}'>${opts.map(([v, l]) => `<option value="${esc(v)}" ${(v ?? '') === (getPath(site, path.concat(k)) ?? opts[0][0]) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
+    }
+    if (kind === 'guestlinks') {
+      return `<div class="f guestlinks"><span>${esc(label)}</span>
+        <p class="hint">Each guest gets their own link that greets them by name and limits how many people they can RSVP for. Paste your website address after you publish it.</p>
+        <input type="text" class="gl-base" placeholder="https://your-site.vercel.app" value="${esc(site._siteUrl || '')}">
+        <textarea class="gl-list" rows="4" placeholder="One guest per line: Name, extra guests&#10;Thandi Mokoena, 1&#10;Uncle Sipho, 3">${esc(site._guests || '')}</textarea>
+        <div class="gl-out"></div></div>`;
+    }
     if (kind === 'textarea') {
       const val = Array.isArray(v) ? v.join('\n') : (v ?? '');
       return `<label class="f"><span>${esc(label)}</span><textarea data-path='${p}' rows="4">${esc(val)}</textarea></label>`;
@@ -137,8 +160,40 @@
     return '';
   }
 
+  function renderWho() {
+    const C = window.KEEPSAKE_CATALOG;
+    const box = $('#who-extra');
+    if (!box || !C) return;
+    const cult = T[key] && T[key].cultures;
+    box.innerHTML = `
+      ${cult ? `<label class="f"><span>Culture theme</span>
+        <select id="culture">
+          <option value="">None (keep my own colours)</option>
+          ${C.cultures.map(c => `<option value="${c.id}" ${site.culture === c.id ? 'selected' : ''}>${esc(c.name)} · ${esc(c.lang)}</option>`).join('')}
+        </select></label>
+        <p class="hint">Sets colours, fonts, the heritage pattern, greetings and a scenery photo. Words like <code>{greet}</code>, <code>{invite}</code>, <code>{lobola}</code>, <code>{wedding}</code> and <code>{thanks}</code> change with it. Please check spelling with family.</p>` : ''}
+      <div class="f"><span>Background song (optional)</span>
+        <span class="img-pick">
+          <label class="file-btn">${site.music && site.music.src ? 'Change song' : 'Choose a song'}<input type="file" id="music" accept="audio/*"></label>
+          ${site.music && site.music.src ? `<span class="hint">${esc(site.music.name || 'song added')}</span><button type="button" class="link-btn" id="music-x">Remove</button>` : '<span class="hint">Plays when guests tap the music button or open the cover.</span>'}
+        </span></div>`;
+  }
+
+  function renderGuestLinks() {
+    $$('.guestlinks').forEach(box => {
+      const base = (box.querySelector('.gl-base').value || '').trim().replace(/\/$/, '');
+      const rows = box.querySelector('.gl-list').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const [n, p] = l.split(','); return { n: n.trim(), p: parseInt(p, 10) || 0 }; });
+      box.querySelector('.gl-out').innerHTML = rows.map(r => {
+        const url = `${base || 'https://your-site'}/?guest=${encodeURIComponent(r.n)}&plus=${r.p}`;
+        const msg = `Hi ${r.n.split(' ')[0]}, you're invited! Open your personal invitation: ${url}`;
+        return `<div class="gl-row"><b>${esc(r.n)}</b><span class="gl-url">${esc(url)}</span><a class="link-btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Send on WhatsApp</a></div>`;
+      }).join('');
+    });
+  }
+
   function renderForm() {
     $('#to').value = site.to || '';
+    renderWho();
     $('#from').value = site.from || '';
     const openState = $$('#sections .sec-card').map(d => d.open);
     $('#sections').innerHTML = site.sections.map((s, i) => {
@@ -163,7 +218,7 @@
     afterForm();
   }
 
-  function afterForm() { if (typeof window.KB_onForm === 'function') window.KB_onForm(); }
+  function afterForm() { renderGuestLinks(); if (typeof window.KB_onForm === 'function') window.KB_onForm(); }
 
   function renderAddMenu() {
     $('#add-type').innerHTML = Object.entries(SCHEMA).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
@@ -179,6 +234,8 @@
   panel.addEventListener('input', e => {
     const el = e.target;
     if (el.id === 'to' || el.id === 'from') { site[el.id] = el.value; push(); return; }
+    if (el.classList.contains('gl-base')) { site._siteUrl = el.value; renderGuestLinks(); save(); return; }
+    if (el.classList.contains('gl-list')) { site._guests = el.value; renderGuestLinks(); save(); return; }
     if (!el.dataset.path) return;
     const path = JSON.parse(el.dataset.path);
     setPath(site, path, el.value);
@@ -187,6 +244,17 @@
 
   panel.addEventListener('change', async e => {
     const el = e.target;
+    if (el.id === 'culture') {
+      if (el.value) window.KEEPSAKE_CATALOG.applyCulture(site, el.value);
+      else { delete site.culture; delete site.words; delete site.pattern; }
+      renderForm(); push(); toast(el.value ? 'Culture theme applied' : 'Culture theme removed'); return;
+    }
+    if (el.id === 'music' && el.files[0]) {
+      const f = el.files[0];
+      if (f.size > 8 * 1048576) { toast('That song is over 8 MB. Try a shorter or smaller MP3.'); return; }
+      const src = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
+      site.music = { src, name: f.name }; renderForm(); push(); toast('Song added'); return;
+    }
     if (el.dataset.path && el.tagName === 'SELECT') { setPath(site, JSON.parse(el.dataset.path), el.value); renderForm(); push(); return; }
     if (el.dataset.son) {
       site.sections[+el.dataset.son].on = el.checked;
@@ -213,6 +281,7 @@
     const b = e.target.closest('button');
     if (!b) return;
     if (b.closest('summary')) e.preventDefault();
+    if (b.id === 'music-x') { delete site.music; renderForm(); push(); return; }
     if (b.dataset.clear) { setPath(site, JSON.parse(b.dataset.clear), ''); renderForm(); push(); }
     else if (b.dataset.remove) {
       const path = JSON.parse(b.dataset.remove); const idx = path.pop();
@@ -262,7 +331,7 @@
     const keep = { to: site.to, from: site.from };
     key = next;
     history.replaceState(null, '', `?t=${key}`);
-    site = (await db.get(key)) || Object.assign(clone(T[key].site), keep);
+    site = (await db.get(key)) || Object.assign(fresh(key), keep);
     renderForm();
     loadFrame();
   });
@@ -280,7 +349,7 @@
     if (!armed(e.currentTarget, 'Tap again to clear everything')) return;
     $('.more').open = false;
     await db.del(key);
-    site = clone(T[key].site);
+    site = fresh(key);
     renderForm(); push(true);
     toast('Template reset');
   });
@@ -318,8 +387,20 @@
     const btn = $('#download');
     btn.disabled = true; btn.textContent = 'Building…';
     try {
-      const [css, js] = await Promise.all(['engine/engine.css', 'engine/engine.js'].map(u => fetch(u).then(r => { if (!r.ok) throw new Error(); return r.text(); })));
-      const data = JSON.stringify(site).replace(/</g, '\\u003c');
+      const files = ['engine/engine.css', 'engine/heritage.css', 'engine/heritage.js', 'engine/engine.js'];
+      const [css1, css2, jsH, jsE] = await Promise.all(files.map(u => fetch(u).then(r => { if (!r.ok) throw new Error(); return r.text(); })));
+      const css = css1 + '\n' + css2, js = jsH + '\n' + jsE;
+      // bundled photos (assets/...) are inlined so the single file works anywhere
+      const out = clone(site); delete out._siteUrl; delete out._guests;
+      const assetUrls = [...new Set(JSON.stringify(out).match(/assets\/[\w\/.-]+\.(?:jpg|jpeg|png|webp)/g) || [])];
+      const map = {};
+      await Promise.all(assetUrls.map(async u => {
+        const b = await fetch(u).then(r => r.blob());
+        map[u] = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); });
+      }));
+      let json = JSON.stringify(out);
+      assetUrls.forEach(u => { json = json.split(u).join(map[u]); });
+      const data = json.replace(/</g, '\\u003c');
       const title = esc(site.to ? `For ${site.to}` : 'For you');
       const html = `<!doctype html>
 <html lang="en" data-theme="${esc(site.theme)}">
@@ -357,7 +438,7 @@
   (async () => {
     renderTplMenu();
     renderAddMenu();
-    site = (await db.get(key)) || clone(T[key].site);
+    site = prep((await db.get(key)) || fresh(key));
     renderForm();
     const first = $('#sections .sec-card'); if (first) first.open = true;
     loadFrame();

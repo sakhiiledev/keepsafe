@@ -8,16 +8,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="engine/engine.css">
+  <link rel="stylesheet" href="engine/heritage.css">
 </head>
 <body>
   <div id="app"></div>
   <script src="engine/templates.js"></script>
+  <script src="engine/templates-heritage.js"></script>
+  <script src="engine/catalog.js"></script>
+  <script src="engine/heritage.js"></script>
   <script src="engine/engine.js"></script>
   <script>
     (() => {
-      const t = new URLSearchParams(location.search).get('t');
+      const q = new URLSearchParams(location.search);
+      const t = q.get('t'), c = q.get('c');
       const tpl = window.KEEPSAKE_TEMPLATES[t] || window.KEEPSAKE_TEMPLATES.anniversary;
-      Keepsake.render(JSON.parse(JSON.stringify(tpl.site)));
+      const site = JSON.parse(JSON.stringify(tpl.site));
+      const C = window.KEEPSAKE_CATALOG;
+      if (c && tpl.cultures) C.applyCulture(site, c);
+      else if (site.culture && !(site.style && site.style.colors)) C.applyCulture(site, site.culture);
+      if (q.get('nocover') === '1') site.sections = site.sections.filter(x => x.type !== 'cover');
+      Keepsake.render(site);
       window.addEventListener('message', e => {
         if (e.origin !== location.origin || !e.data || e.data.type !== 'keepsake:site') return;
         const y = window.scrollY;
