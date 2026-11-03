@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Keepsake</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Gochi+Hand&family=Gloock&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="app-page">
+  <div class="app-wrap">
+    <header class="app-top">
+      <a class="app-brand" href="index.html"><span class="mark" aria-hidden="true">♥</span> Keepsake</a>
+      <nav class="app-nav"><a href="index.html">Templates</a><a href="pricing.html">Pricing</a></nav>
+    </header>
+    <main class="auth">
+      <div class="auth-card">
+        <p class="hand" id="hello">welcome back,</p>
+        <h1 class="serif" id="title">Sign in</h1>
+        <div class="auth-tabs" role="tablist">
+          <button type="button" role="tab" data-mode="in" aria-selected="true">Sign in</button>
+          <button type="button" role="tab" data-mode="up" aria-selected="false">Create account</button>
+        </div>
+        <form id="form" novalidate>
+          <label class="k-f" id="name-row" hidden><span>Your name</span><input type="text" id="name" autocomplete="name" maxlength="120"></label>
+          <label class="k-f"><span>Email</span><input type="email" id="email" autocomplete="email" required></label>
+          <label class="k-f" id="pw-row"><span>Password</span><input type="password" id="pw" autocomplete="current-password" minlength="8" required></label>
+          <button class="k-btn" type="submit" id="go">Sign in</button>
+          <p class="k-msg" id="msg" role="status" aria-live="polite"></p>
+        </form>
+        <div class="k-row" style="justify-content:space-between">
+          <button type="button" class="linkish" id="forgot">Forgot password?</button>
+          <a class="linkish" href="builder.html">Try the builder without an account</a>
+        </div>
+        <p class="fine">Your projects are private to your account. Published pages can be seen by anyone with the link.</p>
+      </div>
+    </main>
+  </div>
+  <script src="vendor/supabase-2.45.4.js"></script>
+  <script src="config.js"></script>
+  <script src="cloud.js"></script>
+  <script>
+    (async () => {
+      const K = window.KCloud, sb = K.sb, $ = s => document.querySelector(s);
+      const q = new URLSearchParams(location.search);
+      const raw = q.get('next') || 'dashboard.html';
+      // only allow same-site relative destinations
+      const next = /^[a-z0-9][\w./?=&%-]*$/i.test(raw) && !raw.includes('//') ? raw : 'dashboard.html';
+      let mode = ['up', 'reset', 'newpw'].includes(q.get('mode')) ? q.get('mode') : 'in';
+      const msg = (t, cls) => { $('#msg').textContent = t; $('#msg').className = 'k-msg' + (cls ? ' ' + cls : ''); };
+
+      function setMode(m) {
+        mode = m;
+        document.querySelectorAll('.auth-tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.mode === m)));
+        $('.auth-tabs').hidden = m === 'reset' || m === 'newpw';
+        $('#name-row').hidden = m !== 'up';
+        $('#pw-row').hidden = m === 'reset';
+        $('#email').closest('.k-f').hidden = m === 'newpw';
+        $('#pw').autocomplete = m === 'in' ? 'current-password' : 'new-password';
+        $('#title').textContent = { in: 'Sign in', up: 'Create your account', reset: 'Reset password', newpw: 'Choose a new password' }[m];
+        $('#hello').textContent = { in: 'welcome back,', up: 'say it properly,', reset: 'no stress,', newpw: 'almost there,' }[m];
+        $('#go').textContent = { in: 'Sign in', up: 'Create account', reset: 'Email me a reset link', newpw: 'Save new password' }[m];
+        $('#forgot').hidden = m !== 'in';
+        msg('');
+      }
+      if (!K.ready) { msg('Accounts are not set up on this copy of Keepsake.', 'bad'); $('#go').disabled = true; return; }
+
+      // coming back from a password-reset email
+      sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') setMode('newpw'); });
+      setMode(mode);
+      const existing = await K.user();
+      if (existing && mode !== 'newpw' && !location.hash.includes('type=recovery')) { location.replace(next); return; }
+
+      document.querySelector('.auth-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.mode); });
+      $('#forgot').addEventListener('click', () => setMode('reset'));
+
+      $('#form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const email = $('#email').value.trim(), pw = $('#pw').value, name = $('#name').value.trim();
+        if (mode !== 'newpw' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg('Enter a valid email address.', 'bad'); $('#email').focus(); return; }
+        if ((mode === 'up' || mode === 'newpw') && pw.length < 8) { msg('Use at least 8 characters for your password.', 'bad'); $('#pw').focus(); return; }
+        if (mode === 'in' && !pw) { msg('Enter your password.', 'bad'); $('#pw').focus(); return; }
+        $('#go').disabled = true; msg('One moment…');
+        try {
+          if (mode === 'in') {
+            const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+            if (error) throw error;
+            location.replace(next);
+          } else if (mode === 'up') {
+            const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { full_name: name }, emailRedirectTo: location.origin + '/dashboard.html' } });
+            if (error) throw error;
+            if (data.session) location.replace(next);
+            else { msg('Check your email and tap the link to confirm your account. Then sign in here.', 'good'); setTimeout(() => setMode('in'), 50); setTimeout(() => msg('Check your email and tap the link to confirm your account. Then sign in here.', 'good'), 60); }
+          } else if (mode === 'reset') {
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/login.html?mode=newpw' });
+            if (error) throw error;
+            msg('If there\'s an account for that email, a reset link is on its way.', 'good');
+          } else if (mode === 'newpw') {
+            const { error } = await sb.auth.updateUser({ password: pw });
+            if (error) throw error;
+            msg('Password saved. Taking you to your projects…', 'good');
+            setTimeout(() => location.replace('dashboard.html'), 900);
+          }
+        } catch (err) { msg(K.nice(err), 'bad'); }
+        finally { $('#go').disabled = false; }
+      });
+    })();
+  </script>
+</body>
+</html>

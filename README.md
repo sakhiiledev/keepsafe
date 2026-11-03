@@ -38,6 +38,29 @@ Upload a song in "Who's it for?". It plays from a floating button or when the co
 ### Photo credits
 Scenery, craft and cattle photos are from Unsplash (Kuhle Mahlalela, Clara Metivier Beukes, William Veitch) and Pexels, used under their free licences. No people are shown; customers add their own.
 
+## Accounts, saving and the business side
+
+Keepsake runs on **Supabase** (database, sign-in, file storage) and **Vercel** (hosting).
+
+| Page | What it does |
+|---|---|
+| `login.html` | Sign in, create account, reset password |
+| `dashboard.html` | Your projects with live previews: edit, publish, share, RSVPs, copy, delete. Admins get an **Admin** tab |
+| `builder.html?id=<project>` | Edits a saved project. Changes autosave to your account; photos and songs upload to storage |
+| `/p/<your-link>` | The published page (`view.html`). Guests' RSVPs go straight to your dashboard |
+| `pricing.html` | Plans and upgrade requests |
+
+### Plans (set in `config.js`, enforced in the database)
+- **Free:** 3 projects, 1 published page, no premium templates on published pages, "Made with Keepsake" note.
+- **Pro (R149/month)** and **Business (R449/month):** unlimited, premium invitations, no note, RSVP CSV export.
+
+Upgrades are requests for now: the customer taps "Get Pro", you see it in **Dashboard › Admin**, send an invoice, and switch their plan when paid. A card gateway (PayFast, Yoco or Paystack) can replace this later.
+
+### Database (Supabase project `keepsake`)
+`profiles` (plan, admin), `projects` (template, site JSON, slug, published), `rsvps`, `upgrade_requests`, plus a public `media` bucket. Row-level security keeps every account's projects private. Guests can only read published pages and send RSVPs, through `get_published()` and `submit_rsvp()`. Plan limits live in a database trigger, so they can't be bypassed from the browser.
+
+Without signing in, the builder still works: it saves on the device and downloads a single HTML file.
+
 ## Customising the look
 
 The builder's **Look** panel lets the customer change:

@@ -10,6 +10,9 @@
   const params = new URLSearchParams(location.search);
   let key = T[params.get('t')] ? params.get('t') : 'anniversary';
   let site;
+  const K = window.KCloud && window.KCloud.ready ? window.KCloud : null;
+  let me = null;          // signed-in profile, or null
+  let project = null;     // cloud project row when editing a saved project
 
   /* ---------- storage (IndexedDB, images make localStorage too small) ---------- */
   const db = (() => {
@@ -50,7 +53,8 @@
         c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
-        res(c.toDataURL('image/jpeg', .82));
+        const data = c.toDataURL('image/jpeg', .82);
+        if (project && K) K.upload(data, 'photo').then(res, () => res(data)); else res(data);
       };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('That file could not be read as an image. Try a JPG or PNG.')); };
       img.src = url;
@@ -105,10 +109,70 @@
   let saveTimer;
   function save() {
     clearTimeout(saveTimer);
+    if (project) { cloudState('Unsaved changes', 'busy'); saveTimer = setTimeout(cloudSave, 1200); return; }
     saveTimer = setTimeout(() => {
-      db.set(key, site).then(() => { $('#saved').textContent = 'Saved on this device.'; })
+      db.set(key, site).then(() => { $('#saved').textContent = me ? 'Saved on this device. Use "Save to my account" to keep it in your projects.' : 'Saved on this device. Sign in to save it to your account.'; })
         .catch(() => { $('#saved').textContent = 'Couldn\'t autosave here. Use Project › Save project file.'; });
     }, 600);
+  }
+
+  /* ---------- cloud (account) saving ---------- */
+  function cloudState(text, cls) { const el = $('#cloud-state'); if (!el) return; el.textContent = text; el.className = 'cloud-state' + (cls ? ' ' + cls : ''); }
+  const titleFor = st => {
+    const names = [st.to, st.from].filter(Boolean).join(' & ');
+    return ((names ? names + ' · ' : '') + (T[key] ? T[key].name : key)).slice(0, 160);
+  };
+  // move any embedded photos/songs (data: URLs) into storage so projects stay small
+  async function liftMedia(obj) {
+    const jobs = [];
+    const walk = (o, kind) => {
+      for (const k in o) {
+        const v = o[k];
+        if (typeof v === 'string' && v.startsWith('data:') && v.length > 200) jobs.push(K.upload(v, /^data:audio/.test(v) ? 'song' : 'photo').then(url => { o[k] = url; }));
+        else if (v && typeof v === 'object') walk(v);
+      }
+    };
+    walk(obj);
+    await Promise.all(jobs);
+    return jobs.length;
+  }
+  let saving = false, again = false;
+  async function cloudSave() {
+    if (!project) return;
+    if (saving) { again = true; return; }
+    saving = true; cloudState('Saving…', 'busy');
+    try {
+      if (await liftMedia(site)) { renderForm(); if (ready) frame.contentWindow.postMessage({ type: 'keepsake:site', site }, location.origin); }
+      const { data, error } = await K.projects.save(project.id, { site, title: titleFor(site), template: key });
+      if (error) throw error;
+      project = Object.assign(project, data);
+      cloudState('Saved', 'ok'); $('#saved').textContent = 'Saved to your account. Changes save automatically.';
+    } catch (err) { cloudState('Not saved', 'bad'); toast(K.nice(err)); }
+    finally { saving = false; if (again) { again = false; cloudSave(); } }
+  }
+  async function cloudCreate() {
+    if (!K) { toast('Accounts are not set up on this copy.'); return false; }
+    if (!me) { await db.set(key, site).catch(() => {}); location.href = 'login.html?mode=up&next=' + encodeURIComponent('builder.html?t=' + key + '&save=1'); return false; }
+    const btn = $('#cloud-save'); btn.disabled = true; cloudState('Saving…', 'busy');
+    try {
+      await liftMedia(site);
+      const { data, error } = await K.projects.create(key, site, titleFor(site));
+      if (error) throw error;
+      project = data;
+      history.replaceState(null, '', `?id=${project.id}`);
+      await db.del(key);
+      btn.hidden = true; cloudState('Saved', 'ok');
+      $('#saved').textContent = 'Saved to your account. Changes save automatically.';
+      renderForm(); push(true);
+      toast('Saved to your projects');
+      return true;
+    } catch (err) {
+      cloudState('Not saved', 'bad');
+      const m = K.nice(err);
+      if (/plan|Pro/.test(m)) { const d = K.modal(`<h2>Your free projects are full</h2><p class="k-sub">${K.esc(m)}</p><div class="k-row end"><a class="k-btn ghost" href="dashboard.html">Manage projects</a><a class="k-btn gold" href="pricing.html">See plans</a></div>`); }
+      else toast(m);
+      return false;
+    } finally { btn.disabled = false; }
   }
 
   /* ---------- form rendering ---------- */
@@ -253,7 +317,9 @@
       const f = el.files[0];
       if (f.size > 8 * 1048576) { toast('That song is over 8 MB. Try a shorter or smaller MP3.'); return; }
       const src = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
-      site.music = { src, name: f.name }; renderForm(); push(); toast('Song added'); return;
+      let url = src;
+      if (project && K) { toast('Uploading song…'); try { url = await K.upload(src, 'song'); } catch (err) { toast(K.nice(err)); return; } }
+      site.music = { src: url, name: f.name }; renderForm(); push(); toast('Song added'); return;
     }
     if (el.dataset.path && el.tagName === 'SELECT') { setPath(site, JSON.parse(el.dataset.path), el.value); renderForm(); push(); return; }
     if (el.dataset.son) {
@@ -328,6 +394,7 @@
 
   $('#tpl').addEventListener('change', async e => {
     const next = e.target.value;
+    if (project) { location.href = `builder.html?t=${next}`; return; }
     const keep = { to: site.to, from: site.from };
     key = next;
     history.replaceState(null, '', `?t=${key}`);
@@ -348,7 +415,7 @@
   $('#reset').addEventListener('click', async e => {
     if (!armed(e.currentTarget, 'Tap again to clear everything')) return;
     $('.more').open = false;
-    await db.del(key);
+    if (!project) await db.del(key);
     site = fresh(key);
     renderForm(); push(true);
     toast('Template reset');
@@ -392,7 +459,8 @@
       const css = css1 + '\n' + css2, js = jsH + '\n' + jsE;
       // bundled photos (assets/...) are inlined so the single file works anywhere
       const out = clone(site); delete out._siteUrl; delete out._guests;
-      const assetUrls = [...new Set(JSON.stringify(out).match(/assets\/[\w\/.-]+\.(?:jpg|jpeg|png|webp)/g) || [])];
+      if (!(K && K.isPaid(me))) out._badge = location.origin + '/';
+      const assetUrls = [...new Set(JSON.stringify(out).match(/(?:assets\/[\w\/.-]+\.(?:jpg|jpeg|png|webp)|https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/media\/[\w\/.-]+)/g) || [])];
       const map = {};
       await Promise.all(assetUrls.map(async u => {
         const b = await fetch(u).then(r => r.blob());
@@ -426,7 +494,7 @@
     } catch (_) {
       toast('Download needs the builder to be opened from a web address, not straight from a file.');
     } finally {
-      btn.disabled = false; btn.textContent = 'Download site';
+      btn.disabled = false; btn.textContent = 'Download';
     }
   });
 
@@ -434,11 +502,31 @@
 
   /* ---------- boot ---------- */
   function loadFrame() { ready = false; frame.src = `preview.html?t=${key}`; }
+  window.addEventListener('beforeunload', e => { if (project && (saving || $('#cloud-state').classList.contains('busy'))) { cloudSave(); e.preventDefault(); e.returnValue = ''; } });
+
+  $('#cloud-save').addEventListener('click', () => cloudCreate());
+  $('#publish').addEventListener('click', async () => {
+    if (!project && !(await cloudCreate())) return;
+    clearTimeout(saveTimer); await cloudSave();
+    K.publishDialog(project, upd => { project = Object.assign(project, upd); });
+  });
 
   (async () => {
     renderTplMenu();
     renderAddMenu();
-    site = prep((await db.get(key)) || fresh(key));
+    if (K) { me = await K.profile().catch(() => null); K.mountAccount($('[data-account]')); }
+    const id = params.get('id');
+    if (id && K) {
+      if (!me) { location.replace('login.html?next=' + encodeURIComponent('builder.html?id=' + id)); return; }
+      const { data, error } = await K.projects.get(id);
+      if (error || !data) { toast(error ? K.nice(error) : 'That project wasn\'t found.'); setTimeout(() => { location.href = 'dashboard.html'; }, 1600); return; }
+      project = data; key = T[data.template] ? data.template : key; site = prep(data.site);
+      delete project.site;
+      $('#cloud-save').hidden = true; cloudState('Saved', 'ok');
+      $('#saved').textContent = 'Saved to your account. Changes save automatically.';
+      renderTplMenu();
+    } else site = prep((await db.get(key)) || fresh(key));
+    if (!project && params.get('save') === '1' && me) { history.replaceState(null, '', `?t=${key}`); cloudCreate(); }
     renderForm();
     const first = $('#sections .sec-card'); if (first) first.open = true;
     loadFrame();

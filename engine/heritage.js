@@ -83,6 +83,7 @@
 
   const E = s => hh().esc(s), F = s => hh().fill(s), P = t => hh().paras(t), L = t => hh().lines(t), PH = (s, a) => hh().photo(s, a), HD = (h, k) => hh().head(h, k);
   const initials = () => { const st = hh().site(); return ((st.to || '').trim()[0] || '') + ((st.from || '').trim()[0] || ''); };
+  const safeUrl = u => { const v = String(u || '').trim(); return /^(https?:|mailto:|tel:)/i.test(v) ? v : (v && !/^[a-z][\w+.-]*:/i.test(v) ? 'https://' + v.replace(/^\/+/, '') : '#'); };
   const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q || '');
 
   /* ---------------- sections ---------------- */
@@ -165,7 +166,7 @@
             ${s.address ? `<p class="venue-addr">${F(s.address)}</p>` : ''}
             ${s.notes ? `<div class="venue-notes">${P(s.notes)}</div>` : ''}
             <div class="venue-btns">
-              <a class="btn" href="${E(s.map || mapsUrl((s.name || '') + ' ' + (s.address || '')))}" target="_blank" rel="noopener">Open in Maps</a>
+              <a class="btn" href="${E(safeUrl(s.map) !== '#' ? safeUrl(s.map) : mapsUrl((s.name || '') + ' ' + (s.address || '')))}" target="_blank" rel="noopener">Open in Maps</a>
               ${s.address ? `<button class="btn ghost copy" type="button" data-copy="${E(s.address)}">Copy address</button>` : ''}
             </div>
           </div>
@@ -251,7 +252,7 @@
         ${HD(s.heading || 'Gifts', s.kicker)}
         ${s.text ? `<div class="r-intro">${P(s.text)}</div>` : ''}
         ${rows.length ? `<div class="det gift-det reveal">${rows.map(r => `<div class="det-row"><span>${F(r.k)}</span><span>${F(r.v)} <button type="button" class="copy mini-copy" data-copy="${E(r.v)}" aria-label="Copy ${E(r.k)}">copy</button></span></div>`).join('')}</div>` : ''}
-        ${s.link ? `<p class="gift-link"><a class="btn" href="${E(s.link)}" target="_blank" rel="noopener">${E(s.linkLabel || 'View our registry')}</a></p>` : ''}
+        ${s.link ? `<p class="gift-link"><a class="btn" href="${E(safeUrl(s.link))}" target="_blank" rel="noopener">${E(s.linkLabel || 'View our registry')}</a></p>` : ''}
       </section>`;
     },
 
@@ -385,6 +386,11 @@
       $('.st-minus').disabled = state.n <= 1; $('.st-plus').disabled = state.n >= max;
     }
     function save() { try { localStorage.setItem(key, JSON.stringify(state)); } catch (_) {} }
+    // published pages (view.html) set this hook to store replies in the couple's dashboard
+    function report() {
+      if (typeof window.KEEPSAKE_ON_RSVP !== 'function') return;
+      try { window.KEEPSAKE_ON_RSVP({ name: state.name, attending: state.yes === true, guests: state.yes ? state.n : 0, meals: state.meals, dietary: state.diet, song: state.song, message: state.msg }); } catch (_) {}
+    }
     function waLink(text) {
       const num = root.dataset.wa;
       return (num ? `https://wa.me/${num}` : 'https://wa.me/') + '?text=' + encodeURIComponent(text);
@@ -418,7 +424,7 @@
 
     const needName = () => { state.name = $('.r-name').value.trim(); const ok = !!state.name; $('.rsvp-err').hidden = ok; if (!ok) $('.r-name').focus(); return ok; };
     $('.choice.yes').addEventListener('click', () => { if (!needName()) return; state.yes = true; save(); show('details'); hh().burst(theme.burst); });
-    $('.choice.no').addEventListener('click', () => { if (!needName()) return; state.yes = false; save(); declined(); show('declined'); });
+    $('.choice.no').addEventListener('click', () => { if (!needName()) return; state.yes = false; save(); declined(); show('declined'); report(); });
     $('.st-minus').addEventListener('click', () => { state.n = Math.max(1, state.n - 1); people(); });
     $('.st-plus').addEventListener('click', () => { state.n = Math.min(max, state.n + 1); people(); });
     $$('.chip').forEach(c => c.addEventListener('click', () => {
@@ -434,7 +440,7 @@
       state.diet = $('.r-diet') ? $('.r-diet').value.trim() : '';
       state.song = $('.r-song') ? $('.r-song').value.trim() : '';
       state.msg = $('.r-msg').value.trim();
-      save(); ticket(); show('ticket'); hh().burst(theme.burst);
+      save(); ticket(); show('ticket'); hh().burst(theme.burst); report();
       $('.ticket').classList.remove('print'); void $('.ticket').offsetWidth; $('.ticket').classList.add('print');
     });
     $$('.r-edit').forEach(b => b.addEventListener('click', () => { state.yes = null; save(); show('name'); }));

@@ -45,13 +45,19 @@
     .use { background: var(--brand); color: #fff; box-shadow: 0 6px 16px rgba(224,36,94,.25); }
     .premium .use { background: linear-gradient(135deg, #8C6420, #C9A04E); box-shadow: 0 6px 16px rgba(140,100,32,.3); }
     .peek { border: 1px solid var(--line); color: var(--ink); }
+    .top-nav { margin-left: auto; display: flex; gap: 4px; align-items: center; font-weight: 700; }
+    .top-nav a, .k-acc { color: var(--ink); text-decoration: none; padding: 8px 12px; border-radius: 10px; }
+    .top-nav a:hover { background: rgba(0,0,0,.05); }
+    .k-plan { display: inline-block; background: linear-gradient(135deg, #8C6420, #D9B25E); color: #fff; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
     footer { color: var(--muted); font-size: .9rem; padding: 2vh 0 6vh; }
     footer a { color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header><span class="mark" aria-hidden="true">♥</span> Keepsake</header>
+    <header><span class="mark" aria-hidden="true">♥</span> Keepsake
+      <nav class="top-nav"><a href="pricing.html">Pricing</a><span data-account><a class="k-acc" href="login.html">Sign in</a></span></nav>
+    </header>
     <section class="intro">
       <p class="hand">say it properly,</p>
       <h1>Pages for love, lobola and weddings.</h1>
@@ -64,8 +70,12 @@
       <button type="button" data-cat="love" aria-pressed="false">Love notes</button>
     </nav>
     <main id="list"></main>
-    <footer>Made by LamTech Solutions. Scenery and cattle photos from Unsplash and Pexels (free licence).</footer>
+    <footer>Made by LamTech Solutions · <a href="pricing.html">Pricing</a> · Scenery and cattle photos from Unsplash and Pexels (free licence).</footer>
   </div>
+  <script src="vendor/supabase-2.45.4.js"></script>
+  <script src="config.js"></script>
+  <script src="cloud.js"></script>
+  <script>window.KCloud && window.KCloud.ready && window.KCloud.mountAccount(document.querySelector('[data-account]'));</script>
   <script src="engine/templates.js"></script>
   <script src="engine/templates-heritage.js"></script>
   <script src="engine/catalog.js"></script>
@@ -82,7 +92,7 @@
         const cur = t.site.culture || '';
         return `
         <article class="tpl${t.premium ? ' premium' : ''}" data-k="${k}">
-          ${t.premium ? '<span class="badge">Premium</span>' : ''}
+          ${t.premium ? '<span class="badge">Premium · Pro</span>' : ''}
           <div class="shot"><iframe data-src="preview.html?t=${k}&nocover=1${cur ? '&c=' + cur : ''}" title="${esc(t.name)} preview" tabindex="-1" aria-hidden="true"></iframe></div>
           <div class="info">
             <h2>${esc(t.name)}</h2>

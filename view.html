@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>You're invited</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/engine/engine.css">
+  <link rel="stylesheet" href="/engine/heritage.css">
+  <style>
+    .v-msg { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 24px; font-family: system-ui, sans-serif; background: #F4F2F7; color: #17161C; }
+    .v-msg h1 { font-family: Georgia, serif; font-weight: 400; font-size: 2.2rem; margin: 0 0 8px; }
+    .v-msg p { color: #6A6875; margin: 0 0 18px; }
+    .v-msg a { color: #E0245E; font-weight: 700; }
+    .v-spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #E1DFE8; border-top-color: #E0245E; animation: vs 0.8s linear infinite; }
+    @keyframes vs { to { transform: rotate(360deg) } }
+  </style>
+</head>
+<body>
+  <div id="app"><div class="v-msg"><div class="v-spin" role="status" aria-label="Loading"></div></div></div>
+  <script src="/vendor/supabase-2.45.4.js"></script>
+  <script src="/config.js"></script>
+  <script src="/engine/catalog.js"></script>
+  <script src="/engine/heritage.js"></script>
+  <script src="/engine/engine.js"></script>
+  <script>
+    (async () => {
+      const C = window.KEEPSAKE_CONFIG;
+      const app = document.getElementById('app');
+      const fail = (h, p) => { app.innerHTML = `<div class="v-msg"><div><h1>${h}</h1><p>${p}</p><a href="/">Make your own with Keepsake</a></div></div>`; };
+      const m = location.pathname.match(/^\/p\/([a-z0-9-]{3,61})\/?$/i);
+      const slug = (m ? m[1] : new URLSearchParams(location.search).get('s') || '').toLowerCase();
+      if (!slug) { fail('Page not found', 'Check the link and try again.'); return; }
+      const sb = window.supabase.createClient(C.supabaseUrl, C.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false } });
+      let row;
+      try {
+        const { data, error } = await sb.rpc('get_published', { p_slug: slug });
+        if (error) throw error;
+        row = data && data[0];
+      } catch (_) { fail('Couldn\'t load this page', 'Check your connection and refresh.'); return; }
+      if (!row) { fail('This page isn\'t available', 'It may have been unpublished, or the link has a typo.'); return; }
+
+      const site = row.site || {};
+      if (site.culture && !(site.style && site.style.colors) && window.KEEPSAKE_CATALOG) window.KEEPSAKE_CATALOG.applyCulture(site, site.culture);
+      delete site._siteUrl; delete site._guests;
+      if (row.owner_plan === 'free') site._badge = location.origin + '/'; else delete site._badge;
+
+      // RSVPs go to the couple's dashboard
+      window.KEEPSAKE_ON_RSVP = async r => {
+        try {
+          await sb.rpc('submit_rsvp', {
+            p_slug: slug, p_name: String(r.name || '').slice(0, 120), p_attending: !!r.attending,
+            p_guests: r.attending ? Math.max(1, Math.min(20, r.guests | 0)) : 0,
+            p_meals: (r.meals || []).slice(0, 10).map(x => String(x).slice(0, 60)),
+            p_dietary: r.dietary || null, p_song: r.song || null, p_message: r.message || null
+          });
+        } catch (_) { /* the guest still sees their ticket and the WhatsApp option */ }
+      };
+
+      Keepsake.render(site);
+      const desc = document.createElement('meta'); desc.name = 'description';
+      desc.content = site.to ? `A page for ${site.to}` : 'You\'re invited';
+      document.head.appendChild(desc);
+    })();
+  </script>
+</body>
+</html>

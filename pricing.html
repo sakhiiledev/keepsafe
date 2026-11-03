@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pricing · Keepsake</title>
+  <meta name="description" content="Keepsake plans: start free, upgrade for premium invitations, unlimited pages and RSVP export.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Gochi+Hand&family=Gloock&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="app-page">
+  <div class="app-wrap">
+    <header class="app-top">
+      <a class="app-brand" href="index.html"><span class="mark" aria-hidden="true">♥</span> Keepsake</a>
+      <nav class="app-nav"><a href="index.html">Templates</a><span data-account></span></nav>
+    </header>
+    <section class="price-hero">
+      <p class="hand" style="font-family:'Gochi Hand',cursive;color:var(--brand);font-size:1.5rem;margin:0">simple pricing,</p>
+      <h1 class="serif">Start free. Upgrade for the big day.</h1>
+      <p>Every template is free to build with. Pay when you want premium invitations, more pages, or no Keepsake note.</p>
+    </section>
+    <main class="plans" id="plans"></main>
+    <section class="faq">
+      <h2 class="serif" style="font-size:1.8rem">Questions</h2>
+      <details><summary>How do I pay?</summary><p id="pay-note"></p></details>
+      <details><summary>Can I cancel?</summary><p>Yes. Plans are month to month. When a plan ends, your pages stay saved; anything beyond the free limits is unpublished until you upgrade again.</p></details>
+      <details><summary>What happens to my RSVPs?</summary><p>They're stored in your account. You can see them in your dashboard at any time, and Pro accounts can download them as a spreadsheet (CSV).</p></details>
+      <details><summary>Can guests see my other projects?</summary><p>No. Projects are private to your account. Guests only see the page you publish, at the link you share.</p></details>
+      <details><summary>I'm a planner. Can I make pages for clients?</summary><p>Yes, that's what Business is for. Make as many client pages as you need from one account.</p></details>
+    </section>
+    <footer class="app-foot"><span>Keepsake by LamTech Solutions · Prices in South African rand (ZAR)</span><a id="support" href="#">Contact us</a></footer>
+  </div>
+  <script src="vendor/supabase-2.45.4.js"></script>
+  <script src="config.js"></script>
+  <script src="cloud.js"></script>
+  <script>
+    (async () => {
+      const K = window.KCloud, C = window.KEEPSAKE_CONFIG, esc = K.esc;
+      document.getElementById('pay-note').textContent = C.paymentNote;
+      document.getElementById('support').href = 'mailto:' + C.supportEmail + '?subject=' + encodeURIComponent('Keepsake plans');
+      const me = K.ready ? await K.profile().catch(() => null) : null;
+      K.mountAccount(document.querySelector('[data-account]'));
+      const order = ['free', 'pro', 'business'];
+      const box = document.getElementById('plans');
+      box.innerHTML = order.map(k => {
+        const p = C.plans[k], cur = me && me.plan === k;
+        const btn = cur ? '<button class="k-btn ghost" disabled>Your plan</button>'
+          : k === 'free' ? `<a class="k-btn ghost" href="${me ? 'dashboard.html' : 'login.html?mode=up'}">${me ? 'Go to my projects' : 'Create a free account'}</a>`
+          : `<button type="button" class="k-btn ${k === 'pro' ? 'gold' : 'dark'}" data-plan="${k}">Get ${esc(p.name)}</button>`;
+        return `<article class="plan${k === 'pro' ? ' feat' : ''}">
+          ${k === 'pro' ? '<span class="tag">Most popular</span>' : ''}
+          <h2>${esc(p.name)}</h2>
+          <p class="price">${p.price ? esc(C.currency) + p.price : 'Free'} <small>${esc(p.per)}</small></p>
+          <p class="blurb">${esc(p.blurb)}</p>
+          <ul>${p.features.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+          ${btn}
+        </article>`;
+      }).join('');
+
+      box.addEventListener('click', async e => {
+        const b = e.target.closest('[data-plan]'); if (!b) return;
+        const plan = b.dataset.plan, p = C.plans[plan];
+        if (!me) { location.href = 'login.html?mode=up&next=pricing.html'; return; }
+        const m = K.modal(`<h2>Upgrade to ${esc(p.name)}</h2>
+          <p class="k-sub">${esc(C.currency)}${p.price} ${esc(p.per)}. ${esc(C.paymentNote)}</p>
+          <label class="k-f"><span>Anything we should know? (optional)</span><textarea id="u-note" rows="3" maxlength="500" placeholder="e.g. wedding date, invoice details, company name"></textarea></label>
+          <p class="k-msg" id="u-msg" aria-live="polite"></p>
+          <div class="k-row end"><button type="button" class="k-btn" id="u-go">Request ${esc(p.name)}</button></div>`);
+        m.el.querySelector('#u-go').addEventListener('click', async ev => {
+          ev.target.disabled = true;
+          const { error } = await K.sb.from('upgrade_requests').insert({ plan, note: m.el.querySelector('#u-note').value.trim() || null });
+          const msg = m.el.querySelector('#u-msg');
+          if (error) { msg.textContent = K.nice(error); msg.className = 'k-msg bad'; ev.target.disabled = false; return; }
+          msg.textContent = `Request sent. We'll email ${me.email} with payment details shortly.`; msg.className = 'k-msg good';
+          ev.target.textContent = 'Sent';
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

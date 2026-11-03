@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Gochi+Hand&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="builder.css">
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <header class="bar">
@@ -27,10 +28,15 @@
           <button type="button" id="save-json">Save project file</button>
           <label class="menu-file">Open project file<input type="file" id="load-json" accept="application/json,.json"></label>
           <button type="button" id="reset">Start this template over</button>
+          <a class="menu-link" href="dashboard.html">My projects</a>
         </div>
       </details>
+      <span class="cloud-state" id="cloud-state" aria-live="polite"></span>
+      <button class="secondary" type="button" id="cloud-save">Save to my account</button>
       <button class="secondary" type="button" id="make-video">Make video</button>
-      <button class="primary" type="button" id="download">Download site</button>
+      <button class="secondary" type="button" id="download">Download</button>
+      <button class="primary" type="button" id="publish">Publish</button>
+      <span data-account></span>
     </div>
   </header>
 
@@ -69,6 +75,9 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="vendor/supabase-2.45.4.js"></script>
+  <script src="config.js"></script>
+  <script src="cloud.js"></script>
   <script src="engine/templates.js"></script>
   <script src="engine/templates-heritage.js"></script>
   <script src="engine/catalog.js"></script>

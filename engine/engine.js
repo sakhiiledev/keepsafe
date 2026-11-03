@@ -629,7 +629,8 @@
     document.title = SITE.title || (SITE.to ? `For ${SITE.to}` : 'For you');
 
     const app = mount || document.getElementById('app');
-    app.innerHTML = (SITE.sections || []).filter(s => s && s.on !== false && R[s.type]).map(s => R[s.type](s)).join('');
+    app.innerHTML = (SITE.sections || []).filter(s => s && s.on !== false && R[s.type]).map(s => R[s.type](s)).join('')
+      + (SITE._badge ? `<a class="ks-badge" href="${esc(SITE._badge)}" target="_blank" rel="noopener">Made with <b>Keepsake</b></a>` : '');
 
     $$('canvas.amb', app).forEach(c => ambient(c, theme.ambient));
     $$('.s-story', app).forEach(initStory);

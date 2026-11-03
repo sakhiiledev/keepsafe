@@ -357,3 +357,7 @@ button { font: inherit; color: inherit; }
 
 /* custom: buttons and numbers keep normal case */
 .btn, .unit b, .rc-front b, .r-list li::before { text-transform: none; letter-spacing: normal; font-style: normal; }
+
+/* "Made with Keepsake" note on free-plan pages */
+.ks-badge { display: block; width: max-content; margin: 0 auto; padding: 18px 16px 26px; font: 600 12px/1.2 system-ui, sans-serif; letter-spacing: .04em; color: var(--ink); opacity: .55; text-decoration: none; }
+.ks-badge:hover { opacity: .9; }
