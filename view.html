@@ -46,7 +46,7 @@
       const site = row.site || {};
       if (site.culture && !(site.style && site.style.colors) && window.KEEPSAKE_CATALOG) window.KEEPSAKE_CATALOG.applyCulture(site, site.culture);
       delete site._siteUrl; delete site._guests;
-      if (row.owner_plan === 'free') site._badge = location.origin + '/'; else delete site._badge;
+      delete site._badge;
 
       // RSVPs go to the couple's dashboard
       window.KEEPSAKE_ON_RSVP = async r => {

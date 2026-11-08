@@ -627,7 +627,6 @@
       const css = css1 + '\n' + css2, js = jsH + '\n' + jsE;
       // bundled photos (assets/...) are inlined so the single file works anywhere
       const out = clone(site); delete out._siteUrl; delete out._guests;
-      if (!(K && K.isPaid(me))) out._badge = location.origin + '/';
       const assetUrls = [...new Set(JSON.stringify(out).match(/(?:assets\/[\w\/.-]+\.(?:jpg|jpeg|png|webp)|https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/media\/[\w\/.-]+)/g) || [])];
       const map = {};
       await Promise.all(assetUrls.map(async u => {

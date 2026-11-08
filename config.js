@@ -13,12 +13,12 @@ window.KEEPSAKE_CONFIG = {
     free: {
       name: 'Free', price: 0, per: '',
       blurb: 'Try every template and share one page.',
-      features: ['Every template in the builder', 'Save up to 3 projects', 'Publish 1 page with your own link', 'RSVPs collected in your dashboard', 'Small "Made with Keepsake" note on the page']
+      features: ['Every template in the builder', 'Save up to 3 projects', 'Publish 1 page with your own link', 'RSVPs collected in your dashboard']
     },
     pro: {
       name: 'Pro', price: 149, per: 'per month',
       blurb: 'For your wedding, lobola or big day.',
-      features: ['Premium invitations (envelope, curtain, candle, scratch)', 'Unlimited projects', 'Unlimited published pages', 'No Keepsake note on pages or downloads', 'RSVP export to CSV']
+      features: ['Premium invitations (envelope, curtain, candle, scratch)', 'Unlimited projects', 'Unlimited published pages', 'RSVP export to CSV']
     },
     business: {
       name: 'Business', price: 449, per: 'per month',

@@ -51,8 +51,8 @@ Keepsake runs on **Supabase** (database, sign-in, file storage) and **Vercel** (
 | `pricing.html` | Plans and upgrade requests |
 
 ### Plans (set in `config.js`, enforced in the database)
-- **Free:** 3 projects, 1 published page, no premium templates on published pages, "Made with Keepsake" note.
-- **Pro (R149/month)** and **Business (R449/month):** unlimited, premium invitations, no note, RSVP CSV export.
+- **Free:** 3 projects, 1 published page, no premium templates on published pages.
+- **Pro (R149/month)** and **Business (R449/month):** unlimited, premium invitations, RSVP CSV export.
 
 Upgrades are requests for now: the customer taps "Get Pro", you see it in **Dashboard › Admin**, send an invoice, and switch their plan when paid. A card gateway (PayFast, Yoco or Paystack) can replace this later.
 
@@ -60,7 +60,7 @@ Upgrades are requests for now: the customer taps "Get Pro", you see it in **Dash
 `profiles` (plan, admin), `projects` (template, site JSON, slug, published), `rsvps`, `upgrade_requests`, plus a public `media` bucket. Row-level security keeps every account's projects private. Guests can only read published pages and send RSVPs, through `get_published()` and `submit_rsvp()`. Plan limits live in a database trigger, so they can't be bypassed from the browser.
 
 ### Publishing without an account
-Anyone can tap **Publish** and get a link straight away, named after the couple (e.g. `/p/nomsa-sipho`); they can change it. The page updates live as they keep editing. Guest pages are free-plan pages (Keepsake note, no premium templates), stay live for 30 days, and can only be edited from the browser that published them (a secret edit token is kept on that device). Creating a free account moves the page, its link and RSVPs into the account for good. Limits: 5 guest pages per connection per day.
+Anyone can tap **Publish** and get a link straight away, named after the couple (e.g. `/p/nomsa-sipho`); they can change it. The page updates live as they keep editing. Guest pages are free-plan pages (no premium templates), stay live for 30 days, and can only be edited from the browser that published them (a secret edit token is kept on that device). Creating a free account moves the page, its link and RSVPs into the account for good. Limits: 5 guest pages per connection per day.
 
 ### Drafts and offline
 Every change is kept on the device as you type (IndexedDB, with localStorage as a fallback), with or without an account, and saved again the moment the tab is hidden or closed. The home page lists your drafts under **Continue editing**. Signed in, changes also sync to your account; if you go offline, editing carries on from the copy on the device and syncs when you're back. A newer copy on the device is restored automatically. `sw.js` caches the app so it opens without a connection.

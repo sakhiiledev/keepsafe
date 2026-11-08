@@ -1,6 +1,6 @@
 /* Keepsake offline cache: the app keeps working (and keeps your drafts) without a connection.
    Pages and code: network first, cached copy when offline. Photos, fonts and libraries: cache first. */
-const VERSION = 'keepsake-v2';
+const VERSION = 'keepsake-v3';
 const SHELL = [
   'index.html', 'builder.html', 'preview.html', 'dashboard.html', 'login.html', 'pricing.html',
   'builder.css', 'builder.js', 'look.js', 'video.js', 'app.css', 'cloud.js', 'config.js',
