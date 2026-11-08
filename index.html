@@ -162,7 +162,7 @@
               const t = T[v.template] || {}, names = [v.site.to, v.site.from].filter(Boolean).join(' & ');
               const acc = k.startsWith('project:');
               const href = acc ? `builder.html?id=${encodeURIComponent(k.slice(8))}` : `builder.html?t=${encodeURIComponent(v.template)}`;
-              return `<a class="d-card" href="${href}"><b>${esc(names || t.name || 'Draft')}</b><span>${esc(t.name || v.template)} · edited ${esc(when(v.ts))}</span><i class="${acc ? 'acc' : ''}">${acc ? 'In your account →' : 'Continue draft →'}</i></a>`;
+              return `<a class="d-card" href="${href}"><b>${esc(names || t.name || 'Draft')}</b><span>${esc(t.name || v.template)} · edited ${esc(when(v.ts))}</span><i class="${acc || (v.guest && v.guest.published) ? 'acc' : ''}">${acc ? 'In your account →' : v.guest && v.guest.published ? 'Live at /p/' + esc(v.guest.slug) + ' →' : 'Continue draft →'}</i></a>`;
             }).join('');
             document.getElementById('drafts').hidden = false;
           };

@@ -12,6 +12,11 @@
     PREMIUM_TEMPLATE: 'Premium invitations need the Pro plan to publish. You can still edit and preview it.',
     SLUG_REQUIRED: 'Choose a web address for the page first.',
     NOT_ADMIN: 'Only admins can do that.',
+    SLUG_TAKEN: 'That web address is taken. Try another one.',
+    SLUG_INVALID: 'Use 3 to 60 lowercase letters, numbers or dashes for the web address.',
+    GUEST_LIMIT: 'You\'ve published a lot of pages today. Create a free account to keep going.',
+    BUSY: 'Lots of people are publishing right now. Try again in a minute.',
+    NOT_ALLOWED: 'This page can only be changed from the device that published it.',
     'duplicate key value violates unique constraint "projects_slug_key"': 'That web address is taken. Try another one.',
     'Invalid login credentials': 'That email and password don\'t match. Check them or reset your password.',
     'Email not confirmed': 'Confirm your email first. We sent you a link when you signed up.',
@@ -58,15 +63,33 @@
   };
 
   /* ---------- uploads: data URL -> public URL in the media bucket ---------- */
-  async function upload(dataUrl, kind) {
-    const u = await user(); if (!u || !/^data:/.test(dataUrl)) return dataUrl;
+  async function upload(dataUrl, kind, opts) {
+    if (!/^data:/.test(dataUrl)) return dataUrl;
+    const u = await user();
+    const folder = u && !(opts && opts.guest) ? u.id : 'guest/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+    if (!u && !(opts && opts.guest)) return dataUrl;
     const blob = await (await fetch(dataUrl)).blob();
     const ext = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/aac': 'aac', 'audio/ogg': 'ogg', 'audio/wav': 'wav' })[blob.type] || 'bin';
-    const path = `${u.id}/${kind || 'media'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${folder}/${kind || 'media'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await sb.storage.from('media').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
     if (error) throw error;
     return sb.storage.from('media').getPublicUrl(path).data.publicUrl;
   }
+
+  /* ---------- guest pages (published without an account) ---------- */
+  // the edit token lives only on this device; a backup list is kept so a cleared draft doesn't lose it
+  const guestStore = {
+    all: () => { try { return JSON.parse(localStorage.getItem('keepsake:guestPages') || '[]'); } catch (_) { return []; } },
+    put: g => { try { const a = guestStore.all().filter(x => x.id !== g.id); a.unshift(Object.assign({ ts: Date.now() }, g)); localStorage.setItem('keepsake:guestPages', JSON.stringify(a.slice(0, 30))); } catch (_) {} },
+    drop: id => { try { localStorage.setItem('keepsake:guestPages', JSON.stringify(guestStore.all().filter(x => x.id !== id))); } catch (_) {} }
+  };
+  const guest = {
+    publish: (template, title, slug, site) => sb.rpc('guest_publish', { p_template: template, p_title: title, p_slug: slug, p_site: site }),
+    update: (g, patch) => sb.rpc('guest_update', Object.assign({ p_id: g.id, p_token: g.token }, patch)),
+    rsvps: g => sb.rpc('guest_rsvps', { p_id: g.id, p_token: g.token }),
+    claim: g => sb.rpc('claim_project', { p_id: g.id, p_token: g.token }),
+    store: guestStore
+  };
 
   /* ---------- slugs ---------- */
   const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
@@ -148,5 +171,5 @@
     el.innerHTML = `<a class="k-acc" href="dashboard.html" title="${esc(p.email)}">My projects${isPaid(p) ? ` <b class="k-plan">${esc(C.plans[p.plan].name)}</b>` : ''}</a>`;
   }
 
-  window.KCloud = { ready: !!sb, sb, config: C, esc, nice, user, profile, requireAuth, signOut, isPaid, projects, upload, slugify, slugOk, pageUrl, modal, publishDialog, mountAccount };
+  window.KCloud = { ready: !!sb, sb, config: C, esc, nice, user, profile, requireAuth, signOut, isPaid, projects, guest, upload, slugify, slugOk, pageUrl, modal, publishDialog, mountAccount };
 })();

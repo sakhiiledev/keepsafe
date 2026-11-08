@@ -13,6 +13,7 @@
   const K = window.KCloud && window.KCloud.ready ? window.KCloud : null;
   let me = null;          // signed-in profile, or null
   let project = null;     // cloud project row when editing a saved project
+  let guestPub = null;    // { id, token, slug, published } when published without an account
 
   /* ---------- storage (IndexedDB, images make localStorage too small) ---------- */
   const db = (() => {
@@ -58,7 +59,7 @@
     const go = () => {
       if (!site) return Promise.resolve();
       if (!project && !lastDraft && baseline === JSON.stringify(site)) return Promise.resolve();   // untouched template: nothing to keep
-      const rec = { site, template: key, ts: Date.now(), project: project ? { id: project.id, title: project.title, slug: project.slug, published: project.published } : null };
+      const rec = { site, template: key, ts: Date.now(), guest: !project && guestPub ? guestPub : null, project: project ? { id: project.id, title: project.title, slug: project.slug, published: project.published } : null };
       const k = draftKey();
       return db.set(k, rec).then(() => { draftOk = true; lsDel(k); lastDraft = rec.ts; })
         .catch(() => { draftOk = lsSet(k, rec); if (draftOk) lastDraft = rec.ts; })
@@ -71,7 +72,7 @@
   const hhmm = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   function showDraftState() {
     if (!draftOk) { cloudState('Not saved on this device', 'bad'); $('#saved').textContent = 'This browser is blocking storage (private mode or full). Use Project › Save project file so you don\'t lose work.'; return; }
-    cloudState('Draft saved · ' + hhmm(lastDraft), 'ok');
+    cloudState((guestPub && guestPub.published ? 'Live · ' : '') + 'Draft saved · ' + hhmm(lastDraft), 'ok');
     $('#saved').textContent = me ? 'Your draft is kept on this device. Use "Save to my account" to keep it in your projects.' : 'Your draft is kept on this device, even if you close the tab. Sign in to keep it in your account too.';
   }
   // save straight away when the tab is hidden or closed, so nothing is lost
@@ -155,6 +156,7 @@
   function save() {
     clearTimeout(saveTimer);
     writeDraft();
+    if (!project && guestPub && guestPub.published) { clearTimeout(guestTimer); guestTimer = setTimeout(guestSync, 2000); cloudState('Live page · updating soon…', 'busy'); }
     if (project) { pending = true; cloudState(navigator.onLine ? 'Saving soon…' : 'Offline · draft kept on this device', 'busy'); saveTimer = setTimeout(cloudSave, 1200); }
   }
   window.addEventListener('online', () => { if (project && pending) { toast('Back online. Saving your changes…'); cloudSave(); } });
@@ -168,12 +170,12 @@
     return ((names ? names + ' · ' : '') + (T[key] ? T[key].name : key)).slice(0, 160);
   };
   // move any embedded photos/songs (data: URLs) into storage so projects stay small
-  async function liftMedia(obj) {
+  async function liftMedia(obj, opts) {
     const jobs = [];
     const walk = (o, kind) => {
       for (const k in o) {
         const v = o[k];
-        if (typeof v === 'string' && v.startsWith('data:') && v.length > 200) jobs.push(K.upload(v, /^data:audio/.test(v) ? 'song' : 'photo').then(url => { o[k] = url; }));
+        if (typeof v === 'string' && v.startsWith('data:') && v.length > 200) jobs.push(K.upload(v, /^data:audio/.test(v) ? 'song' : 'photo', opts).then(url => { o[k] = url; }));
         else if (v && typeof v === 'object') walk(v);
       }
     };
@@ -181,6 +183,104 @@
     await Promise.all(jobs);
     return jobs.length;
   }
+  /* ---------- publishing without an account ---------- */
+  let guestTimer, guestBusy = false;
+  const suggestSlug = () => K.slugify([site.to, site.from].filter(Boolean).join(' ')) || K.slugify(T[key] ? T[key].name : key) || 'my-page';
+  async function guestSync() {
+    if (!guestPub || !guestPub.published || guestBusy) return;
+    if (!navigator.onLine) { cloudState('Offline · live page updates when you\'re back', 'busy'); return; }
+    guestBusy = true;
+    try {
+      if (await liftMedia(site, { guest: true })) { renderForm(); writeDraft(true); }
+      const { error } = await K.guest.update(guestPub, { p_site: site, p_title: titleFor(site) });
+      if (error) throw error;
+      cloudState('Live · updated ' + hhmm(Date.now()), 'ok');
+    } catch (err) { cloudState('Live page not updated · will retry', 'busy'); clearTimeout(guestTimer); guestTimer = setTimeout(guestSync, 30000); }
+    finally { guestBusy = false; }
+  }
+  window.addEventListener('online', () => { if (guestPub && guestPub.published) guestSync(); });
+
+  function guestDialog() {
+    const g = guestPub;
+    const live = g && g.published;
+    const m = K.modal(`
+      <h2>${live ? 'Your page is live' : 'Publish your page'}</h2>
+      <p class="k-sub">${live ? 'Edits you make here update the live page automatically.' : 'No account needed. You get a link to share right away.'}</p>
+      <label class="k-f"><span>Web address</span>
+        <span class="k-slug"><span class="k-pre">${K.esc(location.host)}/p/</span><input type="text" id="g-slug" value="${K.esc(g ? g.slug : suggestSlug())}" maxlength="60" autocomplete="off" spellcheck="false"></span>
+      </label>
+      <p class="k-msg" id="g-msg" aria-live="polite"></p>
+      <div class="k-live" id="g-live" hidden>
+        <a id="g-link" href="#" target="_blank" rel="noopener"></a>
+        <div class="k-row"><button type="button" class="k-btn ghost" id="g-copy">Copy link</button><a class="k-btn ghost" id="g-wa" target="_blank" rel="noopener" href="#">Share on WhatsApp</a><button type="button" class="k-btn ghost" id="g-rsvp">RSVPs</button></div>
+      </div>
+      <div id="g-rsvps"></div>
+      <p class="fine" style="margin-top:14px">Guest pages stay live for 30 days and can only be edited from this browser. <a href="#" id="g-acct">Create a free account</a> to keep it for good, edit from any device and get RSVPs in a dashboard.</p>
+      <div class="k-row end">
+        ${live ? '<button type="button" class="k-btn ghost danger" id="g-off">Take offline</button>' : ''}
+        <button type="button" class="k-btn" id="g-go">${live ? 'Update address' : g ? 'Publish again' : 'Publish'}</button>
+      </div>`);
+    const $m = q => m.el.querySelector(q), input = $m('#g-slug'), msg = $m('#g-msg');
+    const say = (t, cls) => { msg.textContent = t; msg.className = 'k-msg' + (cls ? ' ' + cls : ''); };
+    const showLive = slug => {
+      const url = K.pageUrl(slug);
+      $m('#g-live').hidden = false; $m('#g-link').href = url; $m('#g-link').textContent = url;
+      $m('#g-wa').href = 'https://wa.me/?text=' + encodeURIComponent(`You're invited! ${url}`);
+    };
+    if (live) showLive(g.slug);
+    input.addEventListener('input', () => { const v = K.slugify(input.value); if (v !== input.value) input.value = v; say(''); });
+    $m('#g-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($m('#g-link').href); say('Link copied.', 'good'); } catch (_) { say('Select the link and copy it.'); } });
+    $m('#g-acct').addEventListener('click', e => { e.preventDefault(); m.close(); cloudCreate(); });
+    $m('#g-rsvp').addEventListener('click', async () => {
+      const box = $m('#g-rsvps'); box.innerHTML = '<p class="k-msg">Loading…</p>';
+      const { data, error } = await K.guest.rsvps(guestPub);
+      if (error) { box.innerHTML = `<p class="k-msg bad">${K.esc(K.nice(error))}</p>`; return; }
+      const seen = new Set(), rows = data.filter(r => { const k = r.name.trim().toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+      const people = rows.filter(r => r.attending).reduce((a, r) => a + (r.guests || 1), 0);
+      box.innerHTML = rows.length ? `<p class="k-msg good">${people} coming · ${rows.filter(r => !r.attending).length} can't make it</p>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Reply</th><th>Guests</th><th>Message</th></tr></thead><tbody>${rows.map(r => `<tr><td><b>${K.esc(r.name)}</b></td><td><span class="pill ${r.attending ? 'yes' : 'no'}">${r.attending ? 'Coming' : 'Can\'t come'}</span></td><td>${r.attending ? r.guests : '–'}</td><td>${K.esc(r.message || '')}</td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="k-msg">No replies yet.</p>';
+    });
+    const off = $m('#g-off');
+    if (off) off.addEventListener('click', async () => {
+      const { error } = await K.guest.update(guestPub, { p_published: false });
+      if (error) { say(K.nice(error), 'bad'); return; }
+      guestPub.published = false; K.guest.store.put(Object.assign({ template: key, title: titleFor(site) }, guestPub)); writeDraft(true);
+      cloudState('Page offline', ''); m.close(); toast('Your page is offline. Publish again any time.');
+    });
+    $m('#g-go').addEventListener('click', async () => {
+      const slug = K.slugify(input.value);
+      if (!K.slugOk(slug)) { say('Use 3 to 60 lowercase letters, numbers or dashes.', 'bad'); input.focus(); return; }
+      const b = $m('#g-go'); b.disabled = true; say('Publishing…');
+      try {
+        if (!guestPub || slug !== guestPub.slug) {
+          const { data: free } = await K.sb.rpc('slug_available', { p_slug: slug });
+          if (free === false) throw new Error('SLUG_TAKEN');
+        }
+        site._siteUrl = K.pageUrl(slug);
+        await liftMedia(site, { guest: true });
+        if (guestPub) {
+          const { data, error } = await K.guest.update(guestPub, { p_site: site, p_title: titleFor(site), p_slug: slug, p_published: true });
+          if (error) throw error;
+          Object.assign(guestPub, { slug: data[0].slug, published: true });
+        } else {
+          const { data, error } = await K.guest.publish(key, titleFor(site), slug, site);
+          if (error) throw error;
+          guestPub = { id: data[0].id, token: data[0].token, slug, published: true };
+        }
+        K.guest.store.put(Object.assign({ template: key, title: titleFor(site) }, guestPub));
+        await writeDraft(true); renderForm(); push();
+        showLive(guestPub.slug); say('Published. Share the link with your guests.', 'good');
+        b.textContent = 'Update address';
+        cloudState('Live · updated ' + hhmm(Date.now()), 'ok');
+      } catch (err) {
+        const t = K.nice(err);
+        msg.innerHTML = K.esc(t) + (/Pro plan|account/.test(t) ? ' <a href="pricing.html">See plans</a>' : '');
+        msg.className = 'k-msg bad';
+      } finally { b.disabled = false; }
+    });
+  }
+
   let saving = false, again = false;
   async function cloudSave() {
     if (!project) return;
@@ -206,7 +306,12 @@
     const btn = $('#cloud-save'); btn.disabled = true; cloudState('Saving…', 'busy');
     try {
       await liftMedia(site);
-      const { data, error } = await K.projects.create(key, site, titleFor(site));
+      let data, error;
+      if (guestPub) {
+        ({ error } = await K.guest.claim(guestPub));
+        if (!error) ({ data, error } = await K.projects.save(guestPub.id, { site, title: titleFor(site) }));
+        if (!error) { K.guest.store.drop(guestPub.id); guestPub = null; }
+      } else ({ data, error } = await K.projects.create(key, site, titleFor(site)));
       if (error) throw error;
       project = data;
       history.replaceState(null, '', `?id=${project.id}`);
@@ -453,6 +558,7 @@
     history.replaceState(null, '', `?t=${key}`);
     const d = await readDraft('draft:' + key);
     site = d ? prep(d.site) : Object.assign(fresh(key), keep);
+    guestPub = d && d.guest ? d.guest : null;
     lastDraft = d ? d.ts || 1 : 0; markClean(); if (d) showDraftState(); else cloudState('', '');
     renderForm();
     loadFrame();
@@ -561,9 +667,11 @@
 
   $('#cloud-save').addEventListener('click', () => cloudCreate());
   $('#publish').addEventListener('click', async () => {
+    if (!K) { toast('Publishing isn\'t set up on this copy. Use Download instead.'); return; }
+    if (!project && !me) { clearTimeout(saveTimer); guestDialog(); return; }
     if (!project && !(await cloudCreate())) return;
     clearTimeout(saveTimer); await cloudSave();
-    K.publishDialog(project, upd => { project = Object.assign(project, upd); });
+    K.publishDialog(project, upd => { project = Object.assign(project, upd); if (upd.slug && site._siteUrl !== K.pageUrl(upd.slug)) { site._siteUrl = K.pageUrl(upd.slug); renderForm(); push(); } });
   });
 
   (async () => {
@@ -597,6 +705,8 @@
     } else {
       const d = await readDraft('draft:' + key);
       site = prep(d ? d.site : fresh(key));
+      guestPub = d && d.guest ? d.guest : null;
+      if (guestPub && guestPub.published) cloudState('Live · ' + location.host + '/p/' + guestPub.slug, 'ok');
       if (d && d.ts) { lastDraft = d.ts; showDraftState(); if (d.ts > Date.now() - 864e5 * 60) toast('Welcome back. Your draft is just as you left it.'); }
     }
     if (!project && params.get('save') === '1' && me) { history.replaceState(null, '', `?t=${key}`); cloudCreate(); }
