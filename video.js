@@ -20,7 +20,13 @@
       </div>
 
       <div class="vid-step" id="vid-setup">
-        <p class="hint">Turns the page into a short video: the title, each memory and photo, your list, the question or invite, and the closing line, in your colours and fonts. Good for WhatsApp, Instagram or TikTok.</p>
+        <div class="f"><span>Style</span>
+          <div class="seg seg-wide" role="radiogroup" aria-label="Video style">
+            <button type="button" data-style="scroll" aria-pressed="true">Website scroll<small>Your page exactly as guests see it</small></button>
+            <button type="button" data-style="story" aria-pressed="false">Story slides<small>Big text, one moment at a time</small></button>
+          </div>
+        </div>
+        <p class="hint" id="vid-about"></p>
         <div class="f"><span>Shape</span>
           <div class="seg seg-wide" role="radiogroup" aria-label="Video shape">
             <button type="button" data-shape="portrait" aria-pressed="true">Portrait 9:16<small>Status, Reels, TikTok</small></button>
@@ -61,7 +67,11 @@
     </form>`;
   document.body.appendChild(dlg);
 
-  const opts = { shape: 'portrait', pace: 1, song: null };
+  const opts = { style: 'scroll', shape: 'portrait', pace: 1, song: null };
+  const ABOUT = {
+    scroll: 'Records your actual page scrolling from top to bottom, pausing on each section, exactly as it looks on a phone. Good for WhatsApp status, Instagram or TikTok.',
+    story: 'Turns the page into short slides: the title, each memory and photo, your list, the question or invite, and the closing line, in your colours and fonts.'
+  };
   let rec = null, stopFlag = false, lastBlob = null, lastExt = 'mp4', audioCtx = null;
 
   function showStep(id) { ['vid-setup', 'vid-rec', 'vid-done'].forEach(s => { $('#' + s, dlg).hidden = s !== id; }); }
@@ -69,6 +79,7 @@
   dlg.addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b) return;
+    if (b.dataset.style) { opts.style = b.dataset.style; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); updateLength(); }
     if (b.dataset.shape) { opts.shape = b.dataset.shape; b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); updateLength(); }
     if (b.dataset.pace) { opts.pace = parseFloat(b.dataset.pace); b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); updateLength(); }
   });
@@ -92,6 +103,7 @@
 
   function openDialog() {
     showStep('vid-setup');
+    $('#vid-about', dlg).textContent = ABOUT[opts.style];
     updateLength();
     dlg.showModal();
   }
@@ -111,7 +123,7 @@
     const out = [];
     for (const s of (site.sections || [])) {
       if (!s || s.on === false) continue;
-      if (s.type === 'hero') out.push({ k: 'title', d: 4, kicker: fill(s.kicker), title: fill(s.title), sub: fill(s.sub).replace(/\n+/g, ' · '), img: s.bg || '' });
+      if (s.type === 'hero') out.push({ k: 'title', d: 4, kicker: fill(s.kicker), title: fill(s.title), sub: fill(s.sub).replace(/\n+/g, ' · '), img: s.bg && s.bg !== 'none' ? s.bg : '' });
       else if (s.type === 'countdown') {
         const dt = new Date(s.date);
         if (!isNaN(dt)) { const days = Math.max(0, Math.ceil((dt - Date.now()) / 86400000)); out.push({ k: 'big', d: 3.8, kicker: fill(s.label), big: String(days), unit: days === 1 ? 'day to go' : 'days to go', sub: fmt(s.date) }); }
@@ -123,10 +135,10 @@
       else if (s.type === 'scratch') out.push({ k: 'title', d: 4.2, kicker: fill(s.above), title: fill(s.reveal), sub: fill(s.below), img: '' });
       else if (s.type === 'story') {
         if (s.heading) out.push({ k: 'heading', d: 2.4, title: fill(s.heading) });
-        (s.chapters || []).forEach(c => out.push({ k: 'photo', d: 4.2, img: c.photo, label: fill(c.label), text: firstSentences(c.text, 2) }));
+        (s.chapters || []).forEach(c => out.push({ k: 'photo', d: 4.2, img: c.photo === 'none' ? '' : c.photo, label: fill(c.label), text: firstSentences(c.text, 2) }));
       } else if (s.type === 'memories') {
         if (s.heading) out.push({ k: 'heading', d: 2.4, title: fill(s.heading) });
-        (s.items || []).forEach(m => out.push({ k: 'photo', d: 4.6, img: m.photo, label: fill(m.caption), title: fill(m.title), text: firstSentences(m.text, 1) }));
+        (s.items || []).forEach(m => out.push({ k: 'photo', d: 4.6, img: m.photo === 'none' ? '' : m.photo, label: fill(m.caption), title: fill(m.title), text: firstSentences(m.text, 1) }));
       } else if (s.type === 'counter') {
         const since = new Date(s.since);
         if (!isNaN(since)) out.push({ k: 'big', d: 3.6, kicker: fill(s.label), big: Math.floor((Date.now() - since) / 86400000).toLocaleString(), unit: 'days', sub: firstSentences(s.after, 1) });
@@ -136,7 +148,7 @@
       } else if (s.type === 'cake') out.push({ k: 'cake', d: 4, title: fill(s.heading), candles: Math.min(40, parseInt(s.candles, 10) || 5) });
       else if (s.type === 'letter') { const t = firstSentences(s.body, 3); if (t) out.push({ k: 'quote', d: 5.4, text: t, sign: fill(s.sign) }); }
       else if (s.type === 'gallery') {
-        const imgs = (s.photos || []).filter(Boolean).slice(0, 10);
+        const imgs = (s.photos || []).filter(x => x && x !== 'none').slice(0, 10);
         if (imgs.length) out.push({ k: 'montage', d: Math.max(3, imgs.length * 1.6), imgs, title: fill(s.heading) });
       } else if (s.type === 'question') out.push({ k: 'question', d: 4.6, title: fill(s.question), yes: fill(s.yes || 'Yes') });
       else if (s.type === 'invite') out.push({ k: 'invite', d: 4.4, kicker: fill(s.kicker), date: fill(s.date), time: fill(s.time), place: fill(s.place) });
@@ -150,6 +162,12 @@
   function updateLength() {
     const site = window.KB.getSite();
     if (!site) return;
+    $('#vid-about', dlg).textContent = ABOUT[opts.style];
+    if (opts.style === 'scroll') {
+      const n = (site.sections || []).filter(x => x.on !== false && x.type !== 'cover').length;
+      $('#vid-length', dlg).textContent = `About ${Math.round((4 + n * 3.4) * opts.pace)} seconds long, depending on how long your page is.`;
+      return;
+    }
     const total = buildScenes(site).reduce((a, s) => a + s.d * opts.pace, 0);
     $('#vid-length', dlg).textContent = `About ${Math.round(total)} seconds long.`;
   }
@@ -468,10 +486,21 @@
     $('.vid-canvas-wrap', dlg).style.aspectRatio = `${size[0]} / ${size[1]}`;
 
     showStep('vid-rec');
-    $('#vid-status', dlg).textContent = 'Getting fonts and photos ready…';
-    await Promise.all(['display', 'body', 'hand'].map(r => document.fonts.load(`${look.fonts[r].w || 400} 60px "${look.fonts[r].family}"`).catch(() => {})));
-    const imgs = await loadImages(scenes);
-    const R = makeRendererSwappable(canvas, site, look, scenes, imgs);
+    $('#vid-fill', dlg).style.width = '0%';
+    let R;
+    if (opts.style === 'scroll') {
+      R = await makeScrollRenderer(canvas, site, opts.shape, opts.pace, (txt, f) => {
+        $('#vid-status', dlg).textContent = txt;
+        if (f != null) $('#vid-fill', dlg).style.width = (f * 100).toFixed(0) + '%';
+      });
+      if (stopFlag) { showStep('vid-setup'); return; }
+      $('#vid-fill', dlg).style.width = '0%';
+    } else {
+      $('#vid-status', dlg).textContent = 'Getting fonts and photos ready…';
+      await Promise.all(['display', 'body', 'hand'].map(r => document.fonts.load(`${look.fonts[r].w || 400} 60px "${look.fonts[r].family}"`).catch(() => {})));
+      const imgs = await loadImages(scenes);
+      R = makeRendererSwappable(canvas, site, look, scenes, imgs);
+    }
 
     const stream = canvas.captureStream(30);
     let src = null;
@@ -536,6 +565,125 @@
       : `WebM, ${mb} MB. Plays in Chrome and on Android. For iPhone or WhatsApp, record again in Safari or a recent Chrome, which save MP4.`
       + (hiddenWarned ? ' The tab was hidden while recording, so some parts may have frozen.' : '');
     showStep('vid-done');
+  }
+
+  /* ---------- website scroll: snapshot the real page, then scroll through it ---------- */
+  const VIEW = { portrait: [412, 732], square: [540, 540], landscape: [1280, 720] };
+  let htiLoaded = null;
+  function loadScript(doc, src) {
+    return new Promise((res, rej) => { const sc = doc.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('Could not load the video tools. Check your connection.')); doc.head.appendChild(sc); });
+  }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  async function makeScrollRenderer(canvas, site, shape, pace, status) {
+    const [vw, vh] = VIEW[shape];
+    const W = canvas.width, H = canvas.height, scale = W / vw;
+    status('Opening your page…', 0);
+
+    // 1. render the page off-screen at phone (or TV) size
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true'); frame.tabIndex = -1;
+    frame.style.cssText = `position:fixed;left:0;top:0;width:${vw}px;height:${vh}px;border:0;opacity:0;z-index:-1;pointer-events:none`;
+    const s2 = JSON.parse(JSON.stringify(site));
+    s2.sections = (s2.sections || []).filter(x => x.type !== 'cover');
+    try {
+      await new Promise((res, rej) => {
+        const to = setTimeout(() => rej(new Error('The page took too long to load.')), 20000);
+        const onMsg = e => {
+          if (e.source !== frame.contentWindow || !e.data || e.data.type !== 'keepsake:ready') return;
+          window.removeEventListener('message', onMsg);
+          frame.contentWindow.postMessage({ type: 'keepsake:site', site: s2 }, location.origin);
+          clearTimeout(to); res();
+        };
+        window.addEventListener('message', onMsg);
+        frame.src = `preview.html?t=${encodeURIComponent(window.KB.key())}&nocover=1&embed=1`;
+        document.body.appendChild(frame);
+      });
+      const win = frame.contentWindow, doc = frame.contentDocument;
+      await wait(600);
+      status('Loading fonts and photos…', .05);
+      try { await doc.fonts.ready; } catch (_) {}
+      await Promise.all([...doc.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; setTimeout(r, 8000); })));
+
+      // 2. scroll through once so counters, the herd and other scroll effects play, then show everything
+      const total0 = doc.documentElement.scrollHeight;
+      for (let y = 0; y < total0; y += vh * .8) { win.scrollTo(0, y); await wait(90); if (stopFlag) return null; }
+      win.scrollTo(0, 0);
+      const st = doc.createElement('style');
+      st.textContent = '.reveal,.mem,.polaroid,.r-list li,.sec-head,.inv-card{opacity:1!important;transform:none!important;transition:none!important}*{animation-play-state:paused!important;caret-color:transparent!important}html{scroll-behavior:auto!important}';
+      doc.head.appendChild(st);
+      doc.querySelectorAll('.reveal,.mem,.polaroid,.r-plain .r-list li,.sec-head,.inv-card').forEach(el => el.classList.add('is-in'));
+      await wait(1200);
+
+      // 3. snapshot the page in tiles
+      status('Capturing your page…', .15);
+      if (!win.htmlToImage) await loadScript(doc, 'vendor/html-to-image-1.11.11.js');
+      const hti = win.htmlToImage;
+      const pageH = Math.max(vh, doc.documentElement.scrollHeight);
+      const bg = win.getComputedStyle(doc.body).backgroundColor;
+      const htmlBg = win.getComputedStyle(doc.documentElement).backgroundColor;
+      const fill = bg && bg !== 'rgba(0, 0, 0, 0)' ? bg : (htmlBg && htmlBg !== 'rgba(0, 0, 0, 0)' ? htmlBg : '#ffffff');
+      let fontCSS = '';
+      try { fontCSS = await hti.getFontEmbedCSS(doc.body); } catch (_) {}
+      const skip = n => !(n instanceof win.Element) || !(n.matches('.music-btn, .k-music, [data-video-skip]') || (win.getComputedStyle(n).position === 'fixed' && n.tagName !== 'CANVAS'));
+      const tileH = Math.min(pageH, vh * 3);
+      const tiles = [];
+      for (let y = 0; y < pageH; y += tileH) {
+        if (stopFlag) return null;
+        const h = Math.min(tileH, pageH - y);
+        const c = await hti.toCanvas(doc.body, {
+          width: vw, height: h, canvasWidth: vw, canvasHeight: h, pixelRatio: scale,
+          backgroundColor: fill, fontEmbedCSS: fontCSS || undefined, filter: skip, cacheBust: false,
+          style: { margin: '0', overflow: 'visible', overflowX: 'visible', overflowY: 'visible', height: pageH + 'px', width: vw + 'px', transform: `translateY(-${y}px)`, transformOrigin: 'top left' }
+        });
+        // copy into this page: canvases made inside the off-screen frame stop working once it closes
+        const own = document.createElement('canvas'); own.width = c.width; own.height = c.height;
+        own.getContext('2d').drawImage(c, 0, 0);
+        tiles.push({ y, h, c: own });
+        status('Capturing your page…', .15 + .8 * Math.min(1, (y + h) / pageH));
+      }
+
+      // 4. choreography: hold on each section, glide between them
+      const maxY = Math.max(0, pageH - vh);
+      const tops = [...doc.querySelectorAll('#app > *')].map(el => Math.round(el.getBoundingClientRect().top + win.scrollY))
+        .filter(v => v > 4).map(v => Math.min(v, maxY));
+      const stops = [0, ...tops, maxY].filter((v, i, a) => i === 0 || v - a[i - 1] > vh * .25);
+      if (stops[stops.length - 1] !== maxY && maxY - stops[stops.length - 1] > 10) stops.push(maxY);
+      const hold = 1.5 * pace, speed = vh * .6 / pace;   // css px per second
+      const keys = []; let t = 0;
+      stops.forEach((y, i) => {
+        keys.push({ t, y, hold: true }); t += i === 0 ? 2.2 * pace : hold;
+        if (i < stops.length - 1) { const d = stops[i + 1] - y; const dur = Math.max(1, d / speed); keys.push({ t, y, move: stops[i + 1], dur }); t += dur; }
+      });
+      t += 1.2 * pace;
+      const total = t;
+      const posAt = time => {
+        let y = 0;
+        for (const k of keys) {
+          if (time < k.t) break;
+          if (k.hold) y = k.y;
+          else y = time >= k.t + k.dur ? k.move : k.y + (k.move - k.y) * ease((time - k.t) / k.dur);
+        }
+        return y;
+      };
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      const draw = time => {
+        const y = posAt(time);
+        ctx.fillStyle = fill; ctx.fillRect(0, 0, W, H);
+        for (const tl of tiles) {
+          const top = Math.max(y, tl.y), bot = Math.min(y + vh, tl.y + tl.h);
+          if (bot <= top) continue;
+          const sy = (top - tl.y) * scale, sh = (bot - top) * scale;
+          ctx.drawImage(tl.c, 0, sy, tl.c.width, sh, 0, (top - y) * scale, W, sh * (W / tl.c.width));
+        }
+        // fade in at the start and out at the end
+        const a = time < .6 ? 1 - time / .6 : time > total - .8 ? (time - (total - .8)) / .8 : 0;
+        if (a > 0) { ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+      };
+      status('Ready', 1);
+      return { total, draw };
+    } finally { frame.remove(); }
   }
 
   // makeRenderer with a swappable drawing context for crossfades

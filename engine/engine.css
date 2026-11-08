@@ -141,6 +141,9 @@ button { font: inherit; color: inherit; }
 }
 
 /* ================= memory lane ================= */
+.mem.no-ph { grid-template-columns: 1fr !important; text-align: center; }
+.mem.no-ph .mem-text { margin: 0 auto; }
+.st-ph.no-ph { display: none; }
 .s-mem { padding-top: 16vh; padding-bottom: 10vh; }
 .mem { display: grid; gap: clamp(28px, 5vw, 80px); max-width: 1100px; margin: 0 auto; }
 .mem + .mem { margin-top: clamp(80px, 14vh, 160px); }

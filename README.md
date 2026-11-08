@@ -73,11 +73,15 @@ The builder's **Look** panel lets the customer change:
 
 - **Colours:** 12 palettes, or pick each colour (background, soft colour, text, accent, second accent, cards, story background). Text on buttons and the story band switches between light and dark automatically for contrast.
 - **Fonts:** 14 tested pairings, or choose the heading, body and handwriting fonts separately from 16 / 14 / 12 Google Fonts.
+- **Photos:** any photo spot can be removed with "No photo here" / "Remove photo", so it doesn't show on the page at all. "Add a photo" brings it back.
 - **Type:** heading style (normal, all caps, italic), title size and text size.
 
 The choices are saved in `site.style` and travel with the downloaded page.
 
 ## Make video
+
+**Website scroll** (default) records the real page as guests see it on a phone (or a TV for landscape): it opens the page off-screen, takes a sharp snapshot (`vendor/html-to-image`), then scrolls top to bottom, pausing on each section, with your song. **Story slides** is the older style below.
+
 
 **Make video** turns the page into a short video in the browser (no server): title, counter, story chapters, memories, gallery, reasons one by one, letter, question, invite and closing, in the chosen colours and fonts. Portrait 9:16, square or landscape; slow/normal/quick pace; optional song with fade in and out. Chrome, Edge and Safari save MP4; other browsers save WebM. Recording runs in real time, so the tab must stay open.
 

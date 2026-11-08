@@ -91,7 +91,7 @@
     cattle: s => {
       const n = Math.max(1, Math.min(99, parseInt(s.count, 10) || 1));
       const shown = Math.min(n, 11);
-      const photos = (s.photos && s.photos.length) ? s.photos : [];
+      const photos = (s.photos && s.photos.length) ? s.photos.filter(x => x !== 'none') : [];
       return `
       <section class="sec s-cattle">
         ${HD(s.heading, s.kicker)}
@@ -121,9 +121,9 @@
       <section class="sec s-couple">
         ${HD(s.heading, s.kicker)}
         <div class="duo">
-          <div class="person reveal">${`<div class="ring-photo">${PH(s.photo1)}</div>`}<h3 class="disp">${F(s.name1)}</h3>${s.family1 ? `<p class="hand fam">${F(s.family1)}</p>` : ''}${s.text1 ? `<p>${F(s.text1)}</p>` : ''}</div>
+          <div class="person reveal">${s.photo1 === 'none' ? '' : `<div class="ring-photo">${PH(s.photo1)}</div>`}<h3 class="disp">${F(s.name1)}</h3>${s.family1 ? `<p class="hand fam">${F(s.family1)}</p>` : ''}${s.text1 ? `<p>${F(s.text1)}</p>` : ''}</div>
           <div class="amp disp" aria-hidden="true">&amp;</div>
-          <div class="person reveal">${`<div class="ring-photo">${PH(s.photo2)}</div>`}<h3 class="disp">${F(s.name2)}</h3>${s.family2 ? `<p class="hand fam">${F(s.family2)}</p>` : ''}${s.text2 ? `<p>${F(s.text2)}</p>` : ''}</div>
+          <div class="person reveal">${s.photo2 === 'none' ? '' : `<div class="ring-photo">${PH(s.photo2)}</div>`}<h3 class="disp">${F(s.name2)}</h3>${s.family2 ? `<p class="hand fam">${F(s.family2)}</p>` : ''}${s.text2 ? `<p>${F(s.text2)}</p>` : ''}</div>
         </div>
         ${s.note ? `<div class="r-intro couple-note">${P(s.note)}</div>` : ''}
       </section>`,
@@ -159,7 +159,7 @@
       <section class="sec s-venue">
         ${HD(s.heading, s.kicker)}
         <div class="venue-card reveal">
-          ${s.photo ? `<div class="venue-photo">${PH(s.photo)}</div>` : ''}
+          ${s.photo && s.photo !== 'none' ? `<div class="venue-photo">${PH(s.photo)}</div>` : ''}
           <div class="venue-body">
             <h3 class="disp">${F(s.name)}</h3>
             ${s.time ? `<p class="venue-time">${F(s.time)}</p>` : ''}

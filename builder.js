@@ -355,10 +355,16 @@
       return `<label class="f"><span>${esc(label)}</span><textarea data-path='${p}' rows="4">${esc(val)}</textarea></label>`;
     }
     if (kind === 'image') {
+      if (v === 'none') {
+        return `<div class="f img-off"><span>${esc(label)}</span><div class="img-pick">
+          <span class="hint">No photo here. It won't show on the page.</span>
+          <label class="file-btn">Add a photo<input type="file" accept="image/*" data-img='${p}'></label>
+        </div></div>`;
+      }
       return `<div class="f"><span>${esc(label)}</span><div class="img-pick">
         ${v ? `<img class="thumb" src="${esc(v)}" alt="">` : '<span class="thumb" aria-hidden="true"></span>'}
         <label class="file-btn">${v ? 'Change' : 'Choose photo'}<input type="file" accept="image/*" data-img='${p}'></label>
-        ${v ? `<button type="button" class="link-btn" data-clear='${p}'>Remove</button>` : ''}
+        <button type="button" class="link-btn" data-nophoto='${p}' title="Take this photo spot off the page">${v ? 'Remove photo' : 'No photo here'}</button>
       </div></div>`;
     }
     if (kind === 'images') {
@@ -505,6 +511,7 @@
     if (b.closest('summary')) e.preventDefault();
     if (b.id === 'music-x') { delete site.music; renderForm(); push(); return; }
     if (b.dataset.clear) { setPath(site, JSON.parse(b.dataset.clear), ''); renderForm(); push(); }
+    if (b.dataset.nophoto) { setPath(site, JSON.parse(b.dataset.nophoto), 'none'); renderForm(); push(); toast('Photo spot removed. Use "Add a photo" to bring it back.'); }
     else if (b.dataset.remove) {
       const path = JSON.parse(b.dataset.remove); const idx = path.pop();
       getPath(site, path).splice(idx, 1); renderForm(); push();

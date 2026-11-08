@@ -33,7 +33,9 @@
     .replace(/\{(greet|invite|thanks|lobola|wedding|culture|lang|yes|no)\}/g, (_, k) => esc(word(k)));
   const paras = t => String(t || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(p => `<p>${fill(p)}</p>`).join('');
   const lines = t => Array.isArray(t) ? t : String(t || '').split('\n').map(x => x.trim()).filter(Boolean);
-  const photo = (src, alt = '') => src
+  // "none" means the person removed this photo spot in the builder
+  const NO = v => v === 'none';
+  const photo = (src, alt = '') => NO(src) ? '' : src
     ? `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy">`
     : `<span class="ph" aria-hidden="true"><span class="hand">your photo</span></span>`;
   const head = (h, k) => (h || k) ? `<div class="sec-head">${k ? `<p class="hand kick">${fill(k)}</p>` : ''}${h ? `<h2 class="disp">${fill(h)}</h2>` : ''}</div>` : '';
@@ -41,8 +43,8 @@
   /* ---------------- section renderers ---------------- */
   const R = {
     hero: s => `
-      <header class="sec s-hero${s.bg ? ' has-bg' : ''}">
-        ${s.bg ? `<div class="hero-bg" style="background-image:url('${esc(s.bg)}')" aria-hidden="true"></div>` : ''}
+      <header class="sec s-hero${s.bg && !NO(s.bg) ? ' has-bg' : ''}">
+        ${s.bg && !NO(s.bg) ? `<div class="hero-bg" style="background-image:url('${esc(s.bg)}')" aria-hidden="true"></div>` : ''}
         <canvas class="amb" aria-hidden="true"></canvas>
         <div class="hero-in">
           ${s.kicker ? `<p class="hand kick">${fill(s.kicker)}</p>` : ''}
@@ -67,7 +69,7 @@
       <section class="sec s-story">
         <div class="st-stage" aria-hidden="true">
           <canvas class="amb"></canvas>
-          <div class="st-photos">${ch.map((c, i) => `<figure class="st-ph" data-i="${i}">${photo(c.photo)}</figure>`).join('')}</div>
+          <div class="st-photos">${ch.map((c, i) => `<figure class="st-ph${NO(c.photo) ? ' no-ph' : ''}" data-i="${i}">${photo(c.photo)}</figure>`).join('')}</div>
         </div>
         <div class="st-steps">
           ${s.heading ? `<div class="st-step st-title" data-i="0"><h2 class="disp">${fill(s.heading)}</h2></div>` : ''}
@@ -80,8 +82,8 @@
       <section class="sec s-mem">
         ${head(s.heading, s.kicker)}
         ${(s.items || []).map((m, i) => `
-          <article class="mem${i % 2 ? ' flip' : ''}">
-            <figure class="polaroid">${photo(m.photo, m.caption)}${m.caption ? `<figcaption class="hand">${fill(m.caption)}</figcaption>` : ''}</figure>
+          <article class="mem${i % 2 ? ' flip' : ''}${NO(m.photo) ? ' no-ph' : ''}">
+            ${NO(m.photo) ? '' : `<figure class="polaroid">${photo(m.photo, m.caption)}${m.caption ? `<figcaption class="hand">${fill(m.caption)}</figcaption>` : ''}</figure>`}
             <div class="mem-text">
               ${m.title ? `<h3 class="disp reveal">${fill(m.title)}</h3>` : ''}
               ${paras(m.text).replace(/<p>/g, '<p class="reveal">')}
@@ -223,7 +225,7 @@
     },
 
     gallery: s => {
-      const ph = (s.photos && s.photos.length) ? s.photos : Array(6).fill('');
+      const ph = (s.photos && s.photos.length) ? s.photos.filter(x => !NO(x)) : Array(6).fill('');
       return `
       <section class="sec s-gallery">
         ${head(s.heading)}
@@ -651,7 +653,7 @@
     Object.assign(R, def.sections || {});
     EXT.push(def);
   }
-  window.Keepsake = { render, THEMES, register, h: { esc, fill, paras, lines, photo, head, burst, onCleanup, rnd, clamp, $, $$, word, reduce, site: () => SITE } };
+  window.Keepsake = { render, THEMES, register, h: { esc, fill, paras, lines, photo, head, burst, onCleanup, rnd, clamp, $, $$, word, reduce, NO, site: () => SITE } };
   (window.KEEPSAKE_EXT || []).forEach(register);
   if (window.SITE && document.getElementById('app')) render(window.SITE);
 })();
