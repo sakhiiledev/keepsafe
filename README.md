@@ -59,6 +59,9 @@ Upgrades are requests for now: the customer taps "Get Pro", you see it in **Dash
 ### Database (Supabase project `keepsake`)
 `profiles` (plan, admin), `projects` (template, site JSON, slug, published), `rsvps`, `upgrade_requests`, plus a public `media` bucket. Row-level security keeps every account's projects private. Guests can only read published pages and send RSVPs, through `get_published()` and `submit_rsvp()`. Plan limits live in a database trigger, so they can't be bypassed from the browser.
 
+### Drafts and offline
+Every change is kept on the device as you type (IndexedDB, with localStorage as a fallback), with or without an account, and saved again the moment the tab is hidden or closed. The home page lists your drafts under **Continue editing**. Signed in, changes also sync to your account; if you go offline, editing carries on from the copy on the device and syncs when you're back. A newer copy on the device is restored automatically. `sw.js` caches the app so it opens without a connection.
+
 Without signing in, the builder still works: it saves on the device and downloads a single HTML file.
 
 ## Customising the look

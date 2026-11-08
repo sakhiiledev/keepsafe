@@ -49,6 +49,14 @@
     .top-nav a, .k-acc { color: var(--ink); text-decoration: none; padding: 8px 12px; border-radius: 10px; }
     .top-nav a:hover { background: rgba(0,0,0,.05); }
     .k-plan { display: inline-block; background: linear-gradient(135deg, #8C6420, #D9B25E); color: #fff; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+    .drafts { margin: 0 0 8px; }
+    .d-row { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 12px; scroll-snap-type: x mandatory; }
+    .d-card { flex: 0 0 auto; min-width: 230px; max-width: 280px; scroll-snap-align: start; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; text-decoration: none; color: var(--ink); display: grid; gap: 2px; transition: transform .2s ease, box-shadow .2s ease; }
+    .d-card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(0,0,0,.08); }
+    .d-card b { font-size: 1.02rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d-card span { color: var(--muted); font-size: .85rem; }
+    .d-card i { font-style: normal; color: var(--brand); font-weight: 800; font-size: .85rem; margin-top: 6px; }
+    .d-card .acc { color: #1E7F4F; }
     footer { color: var(--muted); font-size: .9rem; padding: 2vh 0 6vh; }
     footer a { color: var(--muted); }
   </style>
@@ -62,6 +70,10 @@
       <p class="hand">say it properly,</p>
       <h1>Pages for love, lobola and weddings.</h1>
       <p class="lead">Pick a template and a culture, add your words and photos, and share it with a link, a file or a video. Themes for all 11 official languages, from isiZulu to Afrikaans.</p>
+    </section>
+    <section class="drafts" id="drafts" hidden aria-label="Continue editing">
+      <h2 class="section-title">Continue editing <small>saved on this device</small></h2>
+      <div class="d-row" id="d-row"></div>
     </section>
     <nav class="tabs" aria-label="Collections">
       <button type="button" data-cat="all" aria-pressed="true">All</button>
@@ -133,7 +145,31 @@
         card.querySelector('.use').href = `builder.html?t=${k}&c=${c}`;
       });
       draw('all');
+
+      // drafts kept in this browser (IndexedDB "keepsake"), newest first
+      try {
+        const r = indexedDB.open('keepsake', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('projects');
+        r.onsuccess = () => {
+          const out = [], st = r.result.transaction('projects').objectStore('projects').openCursor();
+          st.onsuccess = e => {
+            const c = e.target.result;
+            if (c) { const k = String(c.key), v = c.value; if (v && v.site && (k.startsWith('draft:') || k.startsWith('project:'))) out.push([k, v]); c.continue(); return; }
+            if (!out.length) return;
+            out.sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+            const when = t => { const d = new Date(t), today = new Date().toDateString() === d.toDateString(); return t ? (today ? 'today ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })) : ''; };
+            document.getElementById('d-row').innerHTML = out.slice(0, 12).map(([k, v]) => {
+              const t = T[v.template] || {}, names = [v.site.to, v.site.from].filter(Boolean).join(' & ');
+              const acc = k.startsWith('project:');
+              const href = acc ? `builder.html?id=${encodeURIComponent(k.slice(8))}` : `builder.html?t=${encodeURIComponent(v.template)}`;
+              return `<a class="d-card" href="${href}"><b>${esc(names || t.name || 'Draft')}</b><span>${esc(t.name || v.template)} · edited ${esc(when(v.ts))}</span><i class="${acc ? 'acc' : ''}">${acc ? 'In your account →' : 'Continue draft →'}</i></a>`;
+            }).join('');
+            document.getElementById('drafts').hidden = false;
+          };
+        };
+      } catch (_) {}
     })();
   </script>
+  <script src="sw-register.js"></script>
 </body>
 </html>

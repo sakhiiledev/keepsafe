@@ -33,6 +33,51 @@
       del: k => tx('readwrite', s => s.delete(k)).catch(() => null)
     };
   })();
+  // ask the browser not to clear our storage when space runs low
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (_) {}
+
+  /* ---------- drafts: every change is kept on this device, with or without an account ----------
+     guest drafts: key "draft:<template>"   account projects: key "project:<id>"
+     value: { site, template, ts, project? } */
+  const draftKey = () => project ? 'project:' + project.id : 'draft:' + key;
+  const lsGet = k => { try { return JSON.parse(localStorage.getItem('keepsake:' + k) || 'null'); } catch (_) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem('keepsake:' + k, JSON.stringify(v)); return true; } catch (_) { return false; } };
+  const lsDel = k => { try { localStorage.removeItem('keepsake:' + k); } catch (_) {} };
+  async function readDraft(k) {
+    let v = await db.get(k);
+    if (!v && k.startsWith('draft:')) v = await db.get(k.slice(6));       // drafts saved by the older builder
+    if (v && v.sections) v = { site: v, ts: 0, template: k.replace(/^draft:/, '') };
+    const l = lsGet(k);
+    if (l && (!v || (l.ts || 0) > (v.ts || 0))) v = l;
+    return v && v.site ? v : null;
+  }
+  let lastDraft = 0, draftTimer, draftOk = true, baseline = null;
+  const markClean = () => { baseline = JSON.stringify(site); };
+  function writeDraft(now) {
+    clearTimeout(draftTimer);
+    const go = () => {
+      if (!site) return Promise.resolve();
+      if (!project && !lastDraft && baseline === JSON.stringify(site)) return Promise.resolve();   // untouched template: nothing to keep
+      const rec = { site, template: key, ts: Date.now(), project: project ? { id: project.id, title: project.title, slug: project.slug, published: project.published } : null };
+      const k = draftKey();
+      return db.set(k, rec).then(() => { draftOk = true; lsDel(k); lastDraft = rec.ts; })
+        .catch(() => { draftOk = lsSet(k, rec); if (draftOk) lastDraft = rec.ts; })
+        .then(() => { if (!project) showDraftState(); });
+    };
+    if (now) return go();
+    draftTimer = setTimeout(go, 300);
+    return Promise.resolve();
+  }
+  const hhmm = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function showDraftState() {
+    if (!draftOk) { cloudState('Not saved on this device', 'bad'); $('#saved').textContent = 'This browser is blocking storage (private mode or full). Use Project › Save project file so you don\'t lose work.'; return; }
+    cloudState('Draft saved · ' + hhmm(lastDraft), 'ok');
+    $('#saved').textContent = me ? 'Your draft is kept on this device. Use "Save to my account" to keep it in your projects.' : 'Your draft is kept on this device, even if you close the tab. Sign in to keep it in your account too.';
+  }
+  // save straight away when the tab is hidden or closed, so nothing is lost
+  const flush = () => { if (site) { writeDraft(true); if (project && pending) cloudSave(); } };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  window.addEventListener('pagehide', flush);
 
   /* ---------- helpers ---------- */
   function toast(msg) {
@@ -106,15 +151,15 @@
     };
     if (now) go(); else timer = setTimeout(go, 350);
   }
-  let saveTimer;
+  let saveTimer, pending = false;
   function save() {
     clearTimeout(saveTimer);
-    if (project) { cloudState('Unsaved changes', 'busy'); saveTimer = setTimeout(cloudSave, 1200); return; }
-    saveTimer = setTimeout(() => {
-      db.set(key, site).then(() => { $('#saved').textContent = me ? 'Saved on this device. Use "Save to my account" to keep it in your projects.' : 'Saved on this device. Sign in to save it to your account.'; })
-        .catch(() => { $('#saved').textContent = 'Couldn\'t autosave here. Use Project › Save project file.'; });
-    }, 600);
+    writeDraft();
+    if (project) { pending = true; cloudState(navigator.onLine ? 'Saving soon…' : 'Offline · draft kept on this device', 'busy'); saveTimer = setTimeout(cloudSave, 1200); }
   }
+  window.addEventListener('online', () => { if (project && pending) { toast('Back online. Saving your changes…'); cloudSave(); } });
+  window.addEventListener('offline', () => { if (project) cloudState('Offline · draft kept on this device', 'busy'); });
+  setInterval(() => { if (project && pending && navigator.onLine && !saving) cloudSave(); }, 30000);
 
   /* ---------- cloud (account) saving ---------- */
   function cloudState(text, cls) { const el = $('#cloud-state'); if (!el) return; el.textContent = text; el.className = 'cloud-state' + (cls ? ' ' + cls : ''); }
@@ -140,19 +185,24 @@
   async function cloudSave() {
     if (!project) return;
     if (saving) { again = true; return; }
-    saving = true; cloudState('Saving…', 'busy');
+    if (!navigator.onLine) { cloudState('Offline · draft kept on this device', 'busy'); return; }
+    saving = true; pending = false; cloudState('Saving…', 'busy');
     try {
       if (await liftMedia(site)) { renderForm(); if (ready) frame.contentWindow.postMessage({ type: 'keepsake:site', site }, location.origin); }
       const { data, error } = await K.projects.save(project.id, { site, title: titleFor(site), template: key });
       if (error) throw error;
       project = Object.assign(project, data);
-      cloudState('Saved', 'ok'); $('#saved').textContent = 'Saved to your account. Changes save automatically.';
-    } catch (err) { cloudState('Not saved', 'bad'); toast(K.nice(err)); }
+      cloudState('Saved · ' + hhmm(Date.now()), 'ok'); $('#saved').textContent = 'Saved to your account and on this device. Changes save automatically.';
+    } catch (err) {
+      pending = true;
+      cloudState('Draft kept on this device · will retry', 'busy');
+      const m = K.nice(err); if (!/reach the server/.test(m)) toast(m);
+    }
     finally { saving = false; if (again) { again = false; cloudSave(); } }
   }
   async function cloudCreate() {
     if (!K) { toast('Accounts are not set up on this copy.'); return false; }
-    if (!me) { await db.set(key, site).catch(() => {}); location.href = 'login.html?mode=up&next=' + encodeURIComponent('builder.html?t=' + key + '&save=1'); return false; }
+    if (!me) { await writeDraft(true); location.href = 'login.html?mode=up&next=' + encodeURIComponent('builder.html?t=' + key + '&save=1'); return false; }
     const btn = $('#cloud-save'); btn.disabled = true; cloudState('Saving…', 'busy');
     try {
       await liftMedia(site);
@@ -160,7 +210,8 @@
       if (error) throw error;
       project = data;
       history.replaceState(null, '', `?id=${project.id}`);
-      await db.del(key);
+      await db.del('draft:' + key); await db.del(key); lsDel('draft:' + key);
+      writeDraft(true);
       btn.hidden = true; cloudState('Saved', 'ok');
       $('#saved').textContent = 'Saved to your account. Changes save automatically.';
       renderForm(); push(true);
@@ -396,9 +447,13 @@
     const next = e.target.value;
     if (project) { location.href = `builder.html?t=${next}`; return; }
     const keep = { to: site.to, from: site.from };
+    clearTimeout(saveTimer);
+    await writeDraft(true);          // keep the current template's draft before switching
     key = next;
     history.replaceState(null, '', `?t=${key}`);
-    site = (await db.get(key)) || Object.assign(fresh(key), keep);
+    const d = await readDraft('draft:' + key);
+    site = d ? prep(d.site) : Object.assign(fresh(key), keep);
+    lastDraft = d ? d.ts || 1 : 0; markClean(); if (d) showDraftState(); else cloudState('', '');
     renderForm();
     loadFrame();
   });
@@ -415,8 +470,8 @@
   $('#reset').addEventListener('click', async e => {
     if (!armed(e.currentTarget, 'Tap again to clear everything')) return;
     $('.more').open = false;
-    if (!project) await db.del(key);
-    site = fresh(key);
+    if (!project) { await db.del('draft:' + key); await db.del(key); lsDel('draft:' + key); }
+    site = fresh(key); lastDraft = 0; markClean(); cloudState('', '');
     renderForm(); push(true);
     toast('Template reset');
   });
@@ -502,7 +557,7 @@
 
   /* ---------- boot ---------- */
   function loadFrame() { ready = false; frame.src = `preview.html?t=${key}`; }
-  window.addEventListener('beforeunload', e => { if (project && (saving || $('#cloud-state').classList.contains('busy'))) { cloudSave(); e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', e => { flush(); if (project && (saving || pending) && navigator.onLine) { e.preventDefault(); e.returnValue = ''; } });
 
   $('#cloud-save').addEventListener('click', () => cloudCreate());
   $('#publish').addEventListener('click', async () => {
@@ -517,16 +572,35 @@
     if (K) { me = await K.profile().catch(() => null); K.mountAccount($('[data-account]')); }
     const id = params.get('id');
     if (id && K) {
-      if (!me) { location.replace('login.html?next=' + encodeURIComponent('builder.html?id=' + id)); return; }
-      const { data, error } = await K.projects.get(id);
-      if (error || !data) { toast(error ? K.nice(error) : 'That project wasn\'t found.'); setTimeout(() => { location.href = 'dashboard.html'; }, 1600); return; }
-      project = data; key = T[data.template] ? data.template : key; site = prep(data.site);
-      delete project.site;
-      $('#cloud-save').hidden = true; cloudState('Saved', 'ok');
-      $('#saved').textContent = 'Saved to your account. Changes save automatically.';
+      const local = await readDraft('project:' + id);
+      const signedIn = me || (await K.user().catch(() => null));
+      if (!signedIn && !local) { location.replace('login.html?next=' + encodeURIComponent('builder.html?id=' + id)); return; }
+      const { data, error } = signedIn ? await K.projects.get(id) : { data: null, error: new Error('Failed to fetch') };
+      if (data) {
+        project = data; key = T[data.template] ? data.template : key; site = prep(data.site);
+        delete project.site;
+        const serverTs = Date.parse(data.updated_at) || 0;
+        if (local && local.ts > serverTs + 2000 && JSON.stringify(local.site) !== JSON.stringify(data.site)) {
+          site = prep(local.site); pending = true;
+          toast('Restored changes you made on this device that hadn\'t reached your account yet.');
+          setTimeout(cloudSave, 800);
+        } else { cloudState('Saved', 'ok'); }
+      } else if (local && (!error || /reach the server/.test(K.nice(error)))) {
+        // offline: keep editing from the copy on this device; it syncs when you're back online
+        project = Object.assign({ id }, local.project || {}); key = T[local.template] ? local.template : key; site = prep(local.site);
+        pending = true; cloudState('Offline · draft kept on this device', 'busy');
+        toast('You\'re offline. Editing the copy saved on this device.');
+      } else { toast(error ? K.nice(error) : 'That project wasn\'t found.'); setTimeout(() => { location.href = 'dashboard.html'; }, 1600); return; }
+      $('#cloud-save').hidden = true;
+      $('#saved').textContent = 'Saved to your account and on this device. Changes save automatically.';
       renderTplMenu();
-    } else site = prep((await db.get(key)) || fresh(key));
+    } else {
+      const d = await readDraft('draft:' + key);
+      site = prep(d ? d.site : fresh(key));
+      if (d && d.ts) { lastDraft = d.ts; showDraftState(); if (d.ts > Date.now() - 864e5 * 60) toast('Welcome back. Your draft is just as you left it.'); }
+    }
     if (!project && params.get('save') === '1' && me) { history.replaceState(null, '', `?t=${key}`); cloudCreate(); }
+    markClean();
     renderForm();
     const first = $('#sections .sec-card'); if (first) first.open = true;
     loadFrame();
